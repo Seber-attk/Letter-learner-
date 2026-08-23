@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Letter Learner</title>
+  <style>
+    :root {
+      --primary: #4CAF50;
+      --primary-dark: #388E3C;
+      --secondary: #2196F3;
+      --warning: #FF9800;
+      --danger: #f44336;
+      --bg: #F0F4F8;
+      --card-bg: #FFFFFF;
+      --text: #333333;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; }
+
+    header { background: var(--card-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 8px; }
+    header h1 { margin: 0; font-size: 1.4rem; color: var(--primary); font-weight: 800; cursor: pointer; }
+    .xp-badge { background: #FFF3E0; color: #E65100; border: 2px solid #FFE0B2; padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; }
+
+    .btn { background: var(--primary); color: white; border: none; padding: 10px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-secondary { background: var(--secondary); }
+    .btn-warning { background: var(--warning); }
+    .btn-danger { background: var(--danger); }
+    .btn-outline { background: transparent; color: #666; border: 2px solid #ccc; }
+    .btn-sm { padding: 4px 10px; font-size: 0.8rem; border-radius: 12px; }
+
+    main { flex: 1; max-width: 600px; width: 100%; margin: 20px auto; padding: 0 15px; }
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .progress-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
+    .progress-bar-bg { background: #e0e0e0; height: 16px; border-radius: 8px; overflow: hidden; margin-top: 10px; }
+    .progress-bar-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease; }
+
+    .level-title { font-size: 1.2rem; margin: 20px 0 10px 0; font-weight: 700; color: #555; display: flex; align-items: center; gap: 8px; }
+    .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
+    .lesson-card { background: var(--card-bg); padding: 18px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border: 3px solid transparent; transition: 0.2s; position: relative; }
+    .lesson-card.completed { border-color: var(--primary); }
+    .lesson-card.locked { opacity: 0.5; cursor: not-allowed; background: #e8e8e8; }
+    .lesson-card.active-lesson { border-color: var(--secondary); }
+    .lesson-card.checkpoint { border-color: var(--warning); background: #FFF8E1; }
+    .lesson-icon { font-size: 2rem; margin-bottom: 5px; }
+
+    .quiz-card { background: var(--card-bg); padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .checkpoint-banner { background: #FFF3E0; color: #E65100; padding: 8px 14px; border-radius: 10px; font-weight: bold; font-size: 0.85rem; margin-bottom: 12px; }
+    .big-symbol-box { background: #f9f9f9; border: 3px dashed #bbb; border-radius: 16px; padding: 20px; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; position: relative; }
+    .big-symbol { font-size: 5rem; font-weight: bold; color: #222; }
+    .symbol-img { max-width: 100%; max-height: 150px; border-radius: 8px; object-fit: contain; }
+    .audio-btn { background: #E3F2FD; color: #1976D2; border: none; padding: 12px 24px; border-radius: 30px; font-size: 1rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; }
+
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+    .option-btn { background: #fff; border: 3px solid #e0e0e0; padding: 20px; border-radius: 16px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .option-btn.correct { background: #e8f5e9; border-color: var(--primary); color: #2e7d32; }
+    .option-btn.wrong { background: #ffebee; border-color: var(--danger); color: #c62828; }
+
+    .completion-card { background: var(--card-bg); padding: 30px; border-radius: 20px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .stat-box { display: flex; justify-content: space-around; margin: 25px 0; }
+    .stat-item { background: #F5F5F5; padding: 15px; border-radius: 12px; width: 45%; }
+    .stat-val { font-size: 1.6rem; font-weight: bold; color: var(--primary); }
+
+    .admin-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .form-group { margin-bottom: 15px; text-align: left; }
+    .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
+    .form-group.checkbox { display: flex; align-items: center; gap: 8px; }
+    .form-group.checkbox input { width: auto; }
+
+    details { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #ddd; }
+    summary { font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .q-admin-item { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
+
+    /* AUTH VIEW */
+    .auth-wrap { max-width: 380px; margin: 60px auto; padding: 0 15px; }
+    .auth-card { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); text-align: center; }
+    .auth-tabs { display: flex; margin-bottom: 20px; border-radius: 12px; overflow: hidden; border: 2px solid #eee; }
+    .auth-tab { flex: 1; padding: 10px; cursor: pointer; background: #f5f5f5; font-weight: bold; }
+    .auth-tab.active { background: var(--primary); color: white; }
+    .auth-error { color: var(--danger); font-size: 0.85rem; margin-top: 8px; min-height: 18px; }
+    .loading-msg { text-align: center; padding: 60px 20px; color: #888; }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING / AUTH GATE -->
+  <div id="loading-view" class="loading-msg">Loading LetterLearner…</div>
+
+  <div id="auth-view" class="auth-wrap" style="display:none;">
+    <div class="auth-card">
+      <h1 style="color:var(--primary); margin-top:0;">🔤 LetterLearner</h1>
+      <div class="auth-tabs">
+        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Log In</div>
+        <div id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="auth-email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="At least 6 characters">
+      </div>
+      <div id="signup-name-group" class="form-group" style="display:none;">
+        <label>Your Name</label>
+        <input type="text" id="auth-name" placeholder="e.g. Abel">
+      </div>
+      <button id="auth-submit-btn" class="btn" style="width:100%; padding:12px;" onclick="handleAuthSubmit()">Log In</button>
+      <div id="auth-error" class="auth-error"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP (shown once logged in) -->
+  <div id="app-root" style="display:none;">
+    <header>
+      <h1 onclick="showView('student-home')">🔤 LetterLearner</h1>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div class="xp-badge">⚡ <span id="total-xp">0</span> XP</div>
+        <span id="user-email-label" style="font-size:0.8rem; color:#888;"></span>
+        <button id="admin-mode-btn" class="btn btn-outline" style="display:none;" onclick="showView('admin-view')">Admin</button>
+        <button class="btn btn-outline" onclick="doLogout()">Log Out</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- STUDENT HOME VIEW -->
+      <div id="student-home" class="view active">
+        <div class="progress-card">
+          <h2 style="margin:0;">Your Progress</h2>
+          <div class="progress-bar-bg">
+            <div id="overall-progress" class="progress-bar-fill"></div>
+          </div>
+          <p id="progress-text" style="margin: 10px 0 0 0; font-weight: 600; color: #666;">0 / 0 Lessons Completed</p>
+        </div>
+        <div id="levels-container"></div>
+      </div>
+
+      <!-- QUIZ / LESSON VIEW -->
+      <div id="quiz-view" class="view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <button class="btn btn-outline" onclick="showView('student-home')">← Exit</button>
+          <span id="quiz-progress-num" style="font-weight:bold; color:#666;">Question 1/1</span>
+        </div>
+
+        <div class="quiz-card">
+          <div id="checkpoint-banner" class="checkpoint-banner" style="display:none;">🚩 Checkpoint — Score 85%+ to unlock the next level</div>
+          <div class="big-symbol-box">
+            <div id="quiz-symbol" class="big-symbol"></div>
+            <img id="quiz-image" class="symbol-img" style="display:none;" alt="Lesson Visual">
+            <button id="quiz-audio-btn" class="audio-btn" onclick="playQuestionAudio()" style="display:none;">🔊 Listen Sound</button>
+          </div>
+
+          <h3>Select the correct answer:</h3>
+          <div id="options-container" class="options-grid"></div>
+
+          <button id="next-btn" class="btn" style="width:100%; margin-top:20px; padding:15px; font-size:1.1rem; display:none;" onclick="nextQuestion()">Next Question →</button>
+        </div>
+      </div>
+
+      <!-- LESSON COMPLETE SCREEN -->
+      <div id="completion-view" class="view">
+        <div class="completion-card">
+          <div id="completion-emoji" style="font-size:4rem;">🎉</div>
+          <h2 id="completion-title">Lesson Completed!</h2>
+          <p id="completion-subtext" style="color:#888;"></p>
+          <div class="stat-box">
+            <div class="stat-item">
+              <div>Score</div>
+              <div id="summary-score" class="stat-val">100%</div>
+            </div>
+            <div class="stat-item">
+              <div>XP Earned</div>
+              <div id="summary-xp" class="stat-val">+25 XP</div>
+            </div>
+          </div>
+          <button id="retry-btn" class="btn btn-warning" style="width:100%; padding:15px; font-size:1.1rem; margin-bottom:10px; display:none;" onclick="retryLesson()">Try Again</button>
+          <button class="btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="showView('student-home')">Continue</button>
+        </div>
+      </div>
+
+      <!-- ADMIN PANEL VIEW -->
+      <div id="admin-view" class="view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h2>Admin Panel</h2>
+          <button class="btn btn-outline" onclick="showView('student-home')">Exit Admin</button>
+        </div>
+
+        <div class="admin-card">
+          <h3 id="level-form-title">Create New Level</h3>
+          <input type="hidden" id="edit-level-id">
+          <div class="form-group">
+            <label>Level Name</label>
+            <input type="text" id="new-level-name" placeholder="e.g. Level 1: Basic Vowels">
+          </div>
+          <button class="btn" onclick="saveLevel()">Save Level</button>
+          <button id="cancel-level-edit" class="btn btn-outline" style="display:none;" onclick="resetLevelForm()">Cancel Edit</button>
+        </div>
+
+        <div class="admin-card">
+          <h3 id="lesson-form-title">Create New Lesson</h3>
+          <input type="hidden" id="edit-lesson-id">
+          <div class="form-group">
+            <label>Target Level</label>
+            <select id="lesson-level-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Lesson Title</label>
+            <input type="text" id="new-lesson-title" placeholder="e.g. Letter A Sound">
+          </div>
+          <div class="form-group checkbox">
+            <input type="checkbox" id="new-lesson-checkpoint">
+            <label style="margin:0;">This is a Checkpoint (requires 85% to pass and unlock the next level)</label>
+          </div>
+          <button class="btn" onclick="saveLesson()">Save Lesson</button>
+          <button id="cancel-lesson-edit" class="btn btn-outline" style="display:none;" onclick="resetLessonForm()">Cancel Edit</button>
+        </div>
+
+        <div class="admin-card">
+          <h3 id="question-form-title">Add Question to Lesson</h3>
+          <input type="hidden" id="edit-question-id">
+          <div class="form-group">
+            <label>Select Lesson</label>
+            <select id="question-lesson-select"></select>
+          </div>
+          <div class="form-group">
+            <label>Displayed Letter / Symbol</label>
+            <input type="text" id="q-symbol" placeholder="e.g. A">
+          </div>
+          <div class="form-group">
+            <label>Optional Image Upload</label>
+            <input type="file" id="q-image-file" accept="image/*">
+            <small id="q-image-current" style="color:#666;"></small>
+            <small style="color:#999; display:block; margin-top:4px;">Keep images small (under ~200KB) — they're stored directly in the database for now.</small>
+          </div>
+          <div class="form-group">
+            <label>Optional Audio Upload</label>
+            <input type="file" id="q-audio-file" accept="audio/*">
+            <small id="q-audio-current" style="color:#666;"></small>
+          </div>
+          <div class="form-group">
+            <label>Answer Choices (Comma separated)</label>
+            <input type="text" id="q-options" placeholder="e.g. A, B, C, D">
+          </div>
+          <div class="form-group">
+            <label>Exact Correct Answer</label>
+            <input type="text" id="q-correct" placeholder="e.g. A">
+          </div>
+          <button class="btn" onclick="saveQuestion()">Save Question</button>
+          <button id="cancel-question-edit" class="btn btn-outline" style="display:none;" onclick="resetQuestionForm()">Cancel Edit</button>
+        </div>
+
+        <div class="admin-card">
+          <h3>Content Structure & Management</h3>
+          <div id="admin-structure-list"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDK (modular, via CDN) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      onAuthStateChanged, signOut, updateProfile
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ---- YOUR FIREBASE PROJECT CONFIG ----
+    const firebaseConfig = {
+      apiKey: "AIzaSyDAA69QaUfiHy2V4YBkIzF932rb1_s29Eo",
+      authDomain: "letter-learner-b8712.firebaseapp.com",
+      projectId: "letter-learner-b8712",
+      storageBucket: "letter-learner-b8712.firebasestorage.app",
+      messagingSenderId: "704107548944",
+      appId: "1:704107548944:web:1434ebf02a6837a5301595"
+    };
+
+    // ---- ADMIN ACCESS ----
+    // Only these email addresses see the Admin Panel. Replace with your real email(s).
+    // Match is case-insensitive.
+    const ADMIN_EMAILS = ["mohammedseidmusteffa@gmail.com"];
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const auth = getAuth(firebaseApp);
+    const db = getFirestore(firebaseApp);
+
+    // Expose Firebase pieces to the classic <script> below (kept non-module
+    // for simplicity, since it's mostly DOM/UI logic).
+    window.__fb = {
+      auth, db, doc, getDoc, setDoc, onSnapshot,
+      createUserWithEmailAndPassword, signInWithEmailAndPassword,
+      onAuthStateChanged, signOut, updateProfile, ADMIN_EMAILS
+    };
+
+    // Kick off the app logic once this module has wired everything up.
+    window.dispatchEvent(new Event('fb-ready'));
+  </script>
+
+  <script>
+    // Default content seeded into Firestore the very first time the app runs
+    // (i.e. if content/main doesn't exist yet).
+    const defaultData = {
+      levels: [
+        {
+          id: 'lvl_1',
+          name: 'Level 1: Fundamentals',
+          lessons: [
+            {
+              id: 'les_1',
+              title: 'Letter A',
+              isCheckpoint: false,
+              passThreshold: 85,
+              questions: [
+                { id: 'q_1', symbol: 'A', img: '', audio: '', options: ['A', 'B', 'C', 'D'], correct: 'A' }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+
+    function uid(prefix) {
+      return prefix + '_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+    }
+
+    // ---- STATE ----
+    let fb = null;               // set once Firebase module signals ready
+    let currentUser = null;      // Firebase Auth user object
+    let isAdmin = false;
+    let appData = { levels: [] };
+    let userProgress = { xp: 0, completedLessons: [], checkpointScores: {} };
+
+    let currentLesson = null;
+    let currentQuestionIdx = 0;
+    let lessonScore = 0;
+    let lessonXPEarned = 0;
+    let activeAudio = null;
+    let authMode = 'login';
+
+    let unsubContent = null;
+    let unsubUser = null;
+
+    window.addEventListener('fb-ready', () => {
+      fb = window.__fb;
+      fb.onAuthStateChanged(fb.auth, onAuthChanged);
+    });
+
+    // --- AUTH ---
+    function switchAuthTab(mode) {
+      authMode = mode;
+      document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+      document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
+      document.getElementById('signup-name-group').style.display = mode === 'signup' ? 'block' : 'none';
+      document.getElementById('auth-submit-btn').innerText = mode === 'signup' ? 'Create Account' : 'Log In';
+      document.getElementById('auth-error').innerText = '';
+    }
+
+    async function handleAuthSubmit() {
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value;
+      const name = document.getElementById('auth-name').value.trim();
+      const errEl = document.getElementById('auth-error');
+      errEl.innerText = '';
+
+      if (!email || !password) { errEl.innerText = 'Please enter both email and password.'; return; }
+      if (authMode === 'signup' && password.length < 6) { errEl.innerText = 'Password must be at least 6 characters.'; return; }
+
+      const submitBtn = document.getElementById('auth-submit-btn');
+      submitBtn.disabled = true;
+
+      try {
+        if (authMode === 'signup') {
+          const cred = await fb.createUserWithEmailAndPassword(fb.auth, email, password);
+          if (name) await fb.updateProfile(cred.user, { displayName: name });
+          // onAuthChanged will fire and set up the user's progress doc
+        } else {
+          await fb.signInWithEmailAndPassword(fb.auth, email, password);
+        }
+      } catch (e) {
+        errEl.innerText = friendlyAuthError(e.code);
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
+
+    function friendlyAuthError(code) {
+      const map = {
+        'auth/email-already-in-use': 'That email already has an account — try Log In instead.',
+        'auth/invalid-email': 'That email address looks invalid.',
+        'auth/weak-password': 'Password must be at least 6 characters.',
+        'auth/user-not-found': "No account found with that email — try Sign Up.",
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-credential': 'Incorrect email or password.',
+        'auth/too-many-requests': 'Too many attempts — please wait a bit and try again.'
+      };
+      return map[code] || 'Something went wrong. Please try again.';
+    }
+
+    function doLogout() {
+      if (unsubContent) unsubContent();
+      if (unsubUser) unsubUser();
+      fb.signOut(fb.auth);
+    }
+
+    async function onAuthChanged(user) {
+      document.getElementById('loading-view').style.display = 'none';
+
+      if (!user) {
+        currentUser = null;
+        document.getElementById('app-root').style.display = 'none';
+        document.getElementById('auth-view').style.display = 'block';
+        return;
+      }
+
+      currentUser = user;
+      isAdmin = fb.ADMIN_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
+      document.getElementById('auth-view').style.display = 'none';
+      document.getElementById('app-root').style.display = 'block';
+      document.getElementById('user-email-label').innerText = user.email || '';
+      document.getElementById('admin-mode-btn').style.display = isAdmin ? 'inline-block' : 'none';
+
+      await ensureUserDoc(user);
+      listenToUserProgress(user);
+      listenToContent();
+    }
+
+    async function ensureUserDoc(user) {
+      const ref = fb.doc(fb.db, 'users', user.uid);
+      const snap = await fb.getDoc(ref);
+      if (!snap.exists()) {
+        await fb.setDoc(ref, {
+          email: user.email,
+          xp: 0,
+          completedLessons: [],
+          checkpointScores: {}
+        });
+      }
+    }
+
+    function listenToUserProgress(user) {
+      const ref = fb.doc(fb.db, 'users', user.uid);
+      unsubUser = fb.onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const d = snap.data();
+        userProgress = {
+          xp: d.xp || 0,
+          completedLessons: d.completedLessons || [],
+          checkpointScores: d.checkpointScores || {}
+        };
+        document.getElementById('total-xp').innerText = userProgress.xp;
+        if (document.getElementById('student-home').classList.contains('active')) {
+          renderStudentHome();
+        }
+      });
+    }
+
+    function listenToContent() {
+      const ref = fb.doc(fb.db, 'content', 'main');
+      unsubContent = fb.onSnapshot(ref, async (snap) => {
+        if (!snap.exists()) {
+          // First run ever — seed default content (any logged-in user can do
+          // this once; afterwards it's just read/write per your security rules).
+          await fb.setDoc(ref, defaultData);
+          return;
+        }
+        appData = snap.data();
+        if (!appData.levels) appData.levels = [];
+        if (document.getElementById('student-home').classList.contains('active')) renderStudentHome();
+        if (document.getElementById('admin-view').classList.contains('active')) renderAdminPanel();
+      });
+    }
+
+    async function saveContent() {
+      try {
+        const ref = fb.doc(fb.db, 'content', 'main');
+        await fb.setDoc(ref, appData);
+      } catch (e) {
+        console.error('Failed to save content:', e);
+        alert("Couldn't save changes. Check your internet connection, or the database may have hit a size limit — try smaller images/audio.");
+      }
+    }
+
+    async function saveUserProgress() {
+      try {
+        const ref = fb.doc(fb.db, 'users', currentUser.uid);
+        await fb.setDoc(ref, {
+          email: currentUser.email,
+          xp: userProgress.xp,
+          completedLessons: userProgress.completedLessons,
+          checkpointScores: userProgress.checkpointScores
+        });
+        return true;
+      } catch (e) {
+        console.error('Failed to save progress:', e);
+        return false;
+      }
+    }
+
+    // --- NAVIGATION ---
+    function showView(viewId) {
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById(viewId).classList.add('active');
+
+      if (viewId === 'admin-view' && !isAdmin) {
+        alert("You don't have admin access on this account.");
+        document.getElementById('student-home').classList.add('active');
+        document.getElementById('admin-view').classList.remove('active');
+        return;
+      }
+
+      if (viewId === 'student-home') renderStudentHome();
+      if (viewId === 'admin-view') renderAdminPanel();
+    }
+
+    // --- STUDENT PROGRESSION & SEQUENTIAL + CHECKPOINT UNLOCK ---
+    function isLessonCleared(lesson) {
+      if (lesson.isCheckpoint) {
+        const score = userProgress.checkpointScores[lesson.id];
+        return typeof score === 'number' && score >= (lesson.passThreshold || 85);
+      }
+      return userProgress.completedLessons.includes(lesson.id);
+    }
+
+    function renderStudentHome() {
+      const container = document.getElementById('levels-container');
+      container.innerHTML = '';
+
+      let totalLessons = 0;
+      let clearedCount = 0;
+      let previousLessonCleared = true;
+
+      appData.levels.forEach((level) => {
+        const levelHeader = document.createElement('div');
+        levelHeader.className = 'level-title';
+        levelHeader.innerText = level.name;
+        container.appendChild(levelHeader);
+
+        const grid = document.createElement('div');
+        grid.className = 'lesson-grid';
+
+        level.lessons.forEach((lesson) => {
+          totalLessons++;
+          const cleared = isLessonCleared(lesson);
+          if (cleared) clearedCount++;
+          const isUnlocked = previousLessonCleared;
+          const hasQuestions = lesson.questions && lesson.questions.length > 0;
+          const attempted = lesson.isCheckpoint && typeof userProgress.checkpointScores[lesson.id] === 'number';
+
+          const card = document.createElement('div');
+          card.className = `lesson-card ${cleared ? 'completed' : ''} ${!isUnlocked ? 'locked' : (lesson.isCheckpoint ? 'checkpoint' : 'active-lesson')}`;
+
+          let actionButtons = '';
+          if (cleared) {
+            actionButtons = `<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="event.stopPropagation(); startLesson('${lesson.id}')">Review</button>`;
+          } else if (isUnlocked && !hasQuestions) {
+            actionButtons = `<div style="font-size:0.75rem; color:#c62828; margin-top:6px;">No questions yet</div>`;
+          } else if (isUnlocked && lesson.isCheckpoint && attempted) {
+            actionButtons = `<div style="font-size:0.75rem; color:#E65100; margin-top:6px;">Last score: ${userProgress.checkpointScores[lesson.id]}% — need 85%</div>`;
+          }
+
+          card.innerHTML = `
+            <div class="lesson-icon">${cleared ? '✅' : (!isUnlocked ? '🔒' : (lesson.isCheckpoint ? '🚩' : '⭐'))}</div>
+            <div style="font-weight:bold;">${lesson.title}</div>
+            ${actionButtons}
+          `;
+
+          if (isUnlocked && hasQuestions) {
+            card.onclick = () => startLesson(lesson.id);
+          }
+
+          grid.appendChild(card);
+          previousLessonCleared = cleared;
+        });
+
+        container.appendChild(grid);
+      });
+
+      const progressPct = totalLessons > 0 ? (clearedCount / totalLessons) * 100 : 0;
+      document.getElementById('overall-progress').style.width = `${progressPct}%`;
+      document.getElementById('progress-text').innerText = `${clearedCount} / ${totalLessons} Lessons Completed`;
+    }
+
+    // --- QUIZ & XP LOGIC ---
+    function startLesson(lessonId) {
+      let foundLesson = null;
+      appData.levels.forEach(l => {
+        const les = l.lessons.find(s => s.id === lessonId);
+        if (les) foundLesson = les;
+      });
+
+      if (!foundLesson || !foundLesson.questions || foundLesson.questions.length === 0) {
+        alert("This lesson has no questions yet!");
+        return;
+      }
+
+      currentLesson = foundLesson;
+      currentQuestionIdx = 0;
+      lessonScore = 0;
+      lessonXPEarned = 0;
+      document.getElementById('checkpoint-banner').style.display = foundLesson.isCheckpoint ? 'block' : 'none';
+      showView('quiz-view');
+      renderQuestion();
+    }
+
+    function retryLesson() {
+      if (!currentLesson) { showView('student-home'); return; }
+      currentQuestionIdx = 0;
+      lessonScore = 0;
+      lessonXPEarned = 0;
+      showView('quiz-view');
+      renderQuestion();
+    }
+
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function renderQuestion() {
+      const q = currentLesson.questions[currentQuestionIdx];
+      document.getElementById('quiz-progress-num').innerText = `Question ${currentQuestionIdx + 1}/${currentLesson.questions.length}`;
+      document.getElementById('next-btn').style.display = 'none';
+
+      const symbolEl = document.getElementById('quiz-symbol');
+      symbolEl.innerText = q.symbol || '';
+
+      const imgEl = document.getElementById('quiz-image');
+      if (q.img) { imgEl.src = q.img; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
+
+      const audioBtn = document.getElementById('quiz-audio-btn');
+      if (q.audio) { audioBtn.style.display = 'inline-flex'; activeAudio = new Audio(q.audio); }
+      else { audioBtn.style.display = 'none'; activeAudio = null; }
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+      const shuffledOptions = shuffleArray(q.options.filter(o => o.trim() !== ''));
+      shuffledOptions.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerText = opt;
+        btn.onclick = () => checkAnswer(btn, opt, q.correct);
+        optionsContainer.appendChild(btn);
+      });
+    }
+
+    function playQuestionAudio() {
+      if (activeAudio) activeAudio.play().catch(err => console.warn('Audio playback blocked:', err));
+    }
+
+    function checkAnswer(selectedBtn, selectedOpt, correctOpt) {
+      const allBtns = document.querySelectorAll('.option-btn');
+      allBtns.forEach(b => b.disabled = true);
+
+      if (selectedOpt.trim().toLowerCase() === correctOpt.trim().toLowerCase()) {
+        selectedBtn.classList.add('correct');
+        lessonScore++;
+        lessonXPEarned += 10;
+      } else {
+        selectedBtn.classList.add('wrong');
+        allBtns.forEach(b => {
+          if (b.innerText.trim().toLowerCase() === correctOpt.trim().toLowerCase()) b.classList.add('correct');
+        });
+      }
+      document.getElementById('next-btn').style.display = 'block';
+    }
+
+    function nextQuestion() {
+      currentQuestionIdx++;
+      if (currentQuestionIdx < currentLesson.questions.length) renderQuestion();
+      else finishLesson();
+    }
+
+    async function finishLesson() {
+      const pct = Math.round((lessonScore / currentLesson.questions.length) * 100);
+      const isCheckpoint = !!currentLesson.isCheckpoint;
+      const threshold = currentLesson.passThreshold || 85;
+      const passed = !isCheckpoint || pct >= threshold;
+
+      const prevXP = userProgress.xp;
+      const prevCompleted = userProgress.completedLessons.slice();
+      const prevScores = { ...userProgress.checkpointScores };
+
+      lessonXPEarned += 15;
+      userProgress.xp += lessonXPEarned;
+
+      if (isCheckpoint) {
+        userProgress.checkpointScores[currentLesson.id] = pct;
+        if (passed && !userProgress.completedLessons.includes(currentLesson.id)) {
+          userProgress.completedLessons.push(currentLesson.id);
+        }
+      } else if (!userProgress.completedLessons.includes(currentLesson.id)) {
+        userProgress.completedLessons.push(currentLesson.id);
+      }
+
+      const ok = await saveUserProgress();
+      if (!ok) {
+        userProgress.xp = prevXP;
+        userProgress.completedLessons = prevCompleted;
+        userProgress.checkpointScores = prevScores;
+        alert("Couldn't save your progress — check your internet connection and try again.");
+        showView('student-home');
+        return;
+      }
+
+      document.getElementById('summary-score').innerText = `${pct}%`;
+      document.getElementById('summary-xp').innerText = `+${lessonXPEarned} XP`;
+
+      const retryBtn = document.getElementById('retry-btn');
+      const subtext = document.getElementById('completion-subtext');
+      if (isCheckpoint && !passed) {
+        document.getElementById('completion-emoji').innerText = '🚩';
+        document.getElementById('completion-title').innerText = 'Almost there!';
+        subtext.innerText = `You need ${threshold}% to pass this checkpoint and unlock the next level. Review and try again!`;
+        retryBtn.style.display = 'block';
+      } else if (pct < 70) {
+        document.getElementById('completion-emoji').innerText = '💪';
+        document.getElementById('completion-title').innerText = 'Nice Try!';
+        subtext.innerText = '';
+        retryBtn.style.display = 'block';
+      } else {
+        document.getElementById('completion-emoji').innerText = '🎉';
+        document.getElementById('completion-title').innerText = isCheckpoint ? 'Checkpoint Passed!' : 'Lesson Completed!';
+        subtext.innerText = '';
+        retryBtn.style.display = 'none';
+      }
+
+      showView('completion-view');
+    }
+
+    // --- ADMIN PANEL MANAGEMENT ---
+    function renderAdminPanel() {
+      if (!isAdmin) return;
+
+      const lvlSelect = document.getElementById('lesson-level-select');
+      lvlSelect.innerHTML = appData.levels.length === 0
+        ? '<option value="">-- Create a level first --</option>'
+        : appData.levels.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+      const lesSelect = document.getElementById('question-lesson-select');
+      let lessonOptions = '';
+      appData.levels.forEach(l => l.lessons.forEach(les => {
+        lessonOptions += `<option value="${les.id}">${l.name} → ${les.title}${les.isCheckpoint ? ' (Checkpoint)' : ''}</option>`;
+      }));
+      lesSelect.innerHTML = lessonOptions || '<option value="">-- Create a lesson first --</option>';
+
+      const treeContainer = document.getElementById('admin-structure-list');
+      if (appData.levels.length === 0) {
+        treeContainer.innerHTML = '<p style="color:#666;">No levels yet. Create one above to get started.</p>';
+        return;
+      }
+      let out = '';
+      appData.levels.forEach(l => {
+        out += `<details><summary><span>📂 ${l.name}</span><div>
+          <button class="btn btn-sm btn-warning" onclick="editLevel('${l.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteLevel('${l.id}')">Delete</button>
+        </div></summary><div style="padding-left:15px; margin-top:10px;">`;
+
+        if (l.lessons.length === 0) out += `<p style="color:#999; font-size:0.9rem;">No lessons in this level yet.</p>`;
+
+        l.lessons.forEach(les => {
+          out += `<details><summary><span>${les.isCheckpoint ? '🚩' : '📖'} ${les.title} (${les.questions.length} Qs)${les.isCheckpoint ? ' — Checkpoint' : ''}</span><div>
+            <button class="btn btn-sm btn-warning" onclick="editLesson('${les.id}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteLesson('${les.id}')">Delete</button>
+          </div></summary><div style="padding-left:10px; margin-top:5px;">`;
+
+          if (les.questions.length === 0) out += `<p style="color:#999; font-size:0.85rem;">No questions yet — this lesson can't be played until you add one.</p>`;
+
+          les.questions.forEach((q, idx) => {
+            out += `<div class="q-admin-item"><span>Q${idx+1}: <strong>${q.symbol || 'No Symbol'}</strong> (${q.correct})</span><div>
+              <button class="btn btn-sm btn-warning" onclick="editQuestion('${q.id}')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${q.id}')">Delete</button>
+            </div></div>`;
+          });
+
+          out += `</div></details>`;
+        });
+
+        out += `</div></details>`;
+      });
+      treeContainer.innerHTML = out;
+    }
+
+    function saveLevel() {
+      const id = document.getElementById('edit-level-id').value;
+      const name = document.getElementById('new-level-name').value.trim();
+      if (!name) return alert('Enter level name');
+
+      if (id) {
+        const lvl = appData.levels.find(l => l.id === id);
+        if (lvl) lvl.name = name;
+      } else {
+        appData.levels.push({ id: uid('lvl'), name, lessons: [] });
+      }
+      resetLevelForm();
+      saveContent();
+    }
+
+    function editLevel(id) {
+      const lvl = appData.levels.find(l => l.id === id);
+      if (!lvl) return;
+      document.getElementById('edit-level-id').value = lvl.id;
+      document.getElementById('new-level-name').value = lvl.name;
+      document.getElementById('level-form-title').innerText = "Edit Level";
+      document.getElementById('cancel-level-edit').style.display = 'inline-block';
+    }
+
+    function resetLevelForm() {
+      document.getElementById('edit-level-id').value = '';
+      document.getElementById('new-level-name').value = '';
+      document.getElementById('level-form-title').innerText = "Create New Level";
+      document.getElementById('cancel-level-edit').style.display = 'none';
+    }
+
+    function deleteLevel(id) {
+      if (confirm('Delete this level and all its lessons?')) {
+        appData.levels = appData.levels.filter(l => l.id !== id);
+        saveContent();
+      }
+    }
+
+    function saveLesson() {
+      const id = document.getElementById('edit-lesson-id').value;
+      const lvlId = document.getElementById('lesson-level-select').value;
+      const title = document.getElementById('new-lesson-title').value.trim();
+      const isCheckpoint = document.getElementById('new-lesson-checkpoint').checked;
+      if (!title) return alert('Enter lesson title');
+
+      if (id) {
+        appData.levels.forEach(l => {
+          const les = l.lessons.find(s => s.id === id);
+          if (les) { les.title = title; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; }
+        });
+      } else {
+        if (!lvlId) return alert('Create a level first, then select it here.');
+        const level = appData.levels.find(l => l.id === lvlId);
+        if (level) level.lessons.push({ id: uid('les'), title, isCheckpoint, passThreshold: 85, questions: [] });
+      }
+      resetLessonForm();
+      saveContent();
+    }
+
+    function editLesson(id) {
+      let foundLes = null;
+      appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) foundLes = les; });
+      if (!foundLes) return;
+
+      document.getElementById('edit-lesson-id').value = foundLes.id;
+      document.getElementById('new-lesson-title').value = foundLes.title;
+      document.getElementById('new-lesson-checkpoint').checked = !!foundLes.isCheckpoint;
+      document.getElementById('lesson-form-title').innerText = "Edit Lesson";
+      document.getElementById('cancel-lesson-edit').style.display = 'inline-block';
+    }
+
+    function resetLessonForm() {
+      document.getElementById('edit-lesson-id').value = '';
+      document.getElementById('new-lesson-title').value = '';
+      document.getElementById('new-lesson-checkpoint').checked = false;
+      document.getElementById('lesson-form-title').innerText = "Create New Lesson";
+      document.getElementById('cancel-lesson-edit').style.display = 'none';
+    }
+
+    function deleteLesson(id) {
+      if (confirm('Delete this lesson?')) {
+        appData.levels.forEach(l => { l.lessons = l.lessons.filter(les => les.id !== id); });
+        saveContent();
+      }
+    }
+
+    async function saveQuestion() {
+      const qId = document.getElementById('edit-question-id').value;
+      const lesId = document.getElementById('question-lesson-select').value;
+      const symbol = document.getElementById('q-symbol').value.trim();
+      const optionsRaw = document.getElementById('q-options').value;
+      const correct = document.getElementById('q-correct').value.trim();
+      const imgFile = document.getElementById('q-image-file').files[0];
+      const audioFile = document.getElementById('q-audio-file').files[0];
+
+      if (!qId && !lesId) return alert('Create a lesson first, then select it here.');
+      if (!optionsRaw || !correct) return alert('Please fill in options and correct answer fields.');
+
+      const options = optionsRaw.split(',').map(s => s.trim()).filter(s => s !== '');
+      if (options.length < 2) return alert('Please provide at least 2 answer choices.');
+      if (!options.some(o => o.toLowerCase() === correct.toLowerCase())) {
+        return alert(`The correct answer ("${correct}") must exactly match one of the answer choices: ${options.join(', ')}`);
+      }
+
+      let imgBase64 = imgFile ? await toBase64(imgFile) : null;
+      let audioBase64 = audioFile ? await toBase64(audioFile) : null;
+
+      if (qId) {
+        appData.levels.forEach(l => l.lessons.forEach(les => {
+          const q = les.questions.find(item => item.id === qId);
+          if (q) {
+            q.symbol = symbol; q.options = options; q.correct = correct;
+            if (imgBase64 !== null) q.img = imgBase64;
+            if (audioBase64 !== null) q.audio = audioBase64;
+          }
+        }));
+      } else {
+        let foundLesson = null;
+        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === lesId); if (les) foundLesson = les; });
+        if (foundLesson) {
+          foundLesson.questions.push({ id: uid('q'), symbol, img: imgBase64 || '', audio: audioBase64 || '', options, correct });
+        }
+      }
+
+      resetQuestionForm();
+      saveContent();
+    }
+
+    function editQuestion(qId) {
+      let foundQ = null;
+      appData.levels.forEach(l => l.lessons.forEach(les => { const q = les.questions.find(item => item.id === qId); if (q) foundQ = q; }));
+      if (!foundQ) return;
+
+      document.getElementById('edit-question-id').value = foundQ.id;
+      document.getElementById('q-symbol').value = foundQ.symbol;
+      document.getElementById('q-options').value = foundQ.options.join(', ');
+      document.getElementById('q-correct').value = foundQ.correct;
+      document.getElementById('q-image-current').innerText = foundQ.img ? 'Current: image attached (upload a new file to replace it)' : '';
+      document.getElementById('q-audio-current').innerText = foundQ.audio ? 'Current: audio attached (upload a new file to replace it)' : '';
+      document.getElementById('question-form-title').innerText = "Edit Question";
+      document.getElementById('cancel-question-edit').style.display = 'inline-block';
+    }
+
+    function resetQuestionForm() {
+      document.getElementById('edit-question-id').value = '';
+      document.getElementById('q-symbol').value = '';
+      document.getElementById('q-options').value = '';
+      document.getElementById('q-correct').value = '';
+      document.getElementById('q-image-file').value = '';
+      document.getElementById('q-audio-file').value = '';
+      document.getElementById('q-image-current').innerText = '';
+      document.getElementById('q-audio-current').innerText = '';
+      document.getElementById('question-form-title').innerText = "Add Question to Lesson";
+      document.getElementById('cancel-question-edit').style.display = 'none';
+    }
+
+    function deleteQuestion(qId) {
+      if (confirm('Delete this question?')) {
+        appData.levels.forEach(l => l.lessons.forEach(les => { les.questions = les.questions.filter(q => q.id !== qId); }));
+        saveContent();
+      }
+    }
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  </script>
+</body>
+</html>
