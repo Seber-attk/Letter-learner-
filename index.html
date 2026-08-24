@@ -76,7 +76,6 @@
     summary { font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
     .q-admin-item { background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #eee; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; }
 
-    /* AUTH VIEW */
     .auth-wrap { max-width: 380px; margin: 60px auto; padding: 0 15px; }
     .auth-card { background: var(--card-bg); padding: 30px; border-radius: 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); text-align: center; }
     .auth-tabs { display: flex; margin-bottom: 20px; border-radius: 12px; overflow: hidden; border: 2px solid #eee; }
@@ -88,7 +87,6 @@
 </head>
 <body>
 
-  <!-- LOADING / AUTH GATE -->
   <div id="loading-view" class="loading-msg">Loading LetterLearner…</div>
 
   <div id="auth-view" class="auth-wrap" style="display:none;">
@@ -115,7 +113,6 @@
     </div>
   </div>
 
-  <!-- MAIN APP (shown once logged in) -->
   <div id="app-root" style="display:none;">
     <header>
       <h1 onclick="showView('student-home')">🔤 LetterLearner</h1>
@@ -128,7 +125,6 @@
     </header>
 
     <main>
-      <!-- STUDENT HOME VIEW -->
       <div id="student-home" class="view active">
         <div class="progress-card">
           <h2 style="margin:0;">Your Progress</h2>
@@ -140,7 +136,6 @@
         <div id="levels-container"></div>
       </div>
 
-      <!-- QUIZ / LESSON VIEW -->
       <div id="quiz-view" class="view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
           <button class="btn btn-outline" onclick="showView('student-home')">← Exit</button>
@@ -162,7 +157,6 @@
         </div>
       </div>
 
-      <!-- LESSON COMPLETE SCREEN -->
       <div id="completion-view" class="view">
         <div class="completion-card">
           <div id="completion-emoji" style="font-size:4rem;">🎉</div>
@@ -183,7 +177,6 @@
         </div>
       </div>
 
-      <!-- ADMIN PANEL VIEW -->
       <div id="admin-view" class="view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
           <h2>Admin Panel</h2>
@@ -225,7 +218,7 @@
           <input type="hidden" id="edit-question-id">
           <div class="form-group">
             <label>Select Lesson</label>
-            <select id="question-lesson-select"></select>
+            <select id="question-lesson-select" onchange="onQuestionLessonChange()"></select>
           </div>
           <div class="form-group">
             <label>Displayed Letter / Symbol</label>
@@ -235,12 +228,13 @@
             <label>Optional Image Upload</label>
             <input type="file" id="q-image-file" accept="image/*">
             <small id="q-image-current" style="color:#666;"></small>
-            <small style="color:#999; display:block; margin-top:4px;">Keep images small (under ~200KB) — they're stored directly in the database for now.</small>
+            <small style="color:#999; display:block; margin-top:4px;">Images are auto-resized and compressed, so photos are fine.</small>
           </div>
           <div class="form-group">
             <label>Optional Audio Upload</label>
             <input type="file" id="q-audio-file" accept="audio/*">
             <small id="q-audio-current" style="color:#666;"></small>
+            <small style="color:#999; display:block; margin-top:4px;">Keep audio short (a word/sound, a few seconds) — long clips can't be auto-compressed.</small>
           </div>
           <div class="form-group">
             <label>Answer Choices (Comma separated)</label>
@@ -256,13 +250,13 @@
 
         <div class="admin-card">
           <h3>Content Structure & Management</h3>
+          <button class="btn btn-sm btn-outline" style="margin-bottom:10px;" onclick="renderAdminPanel()">↻ Refresh</button>
           <div id="admin-structure-list"></div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- Firebase SDK (modular, via CDN) -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
@@ -270,10 +264,9 @@
       onAuthStateChanged, signOut, updateProfile
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
-      getFirestore, doc, getDoc, setDoc, onSnapshot
+      getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    // ---- YOUR FIREBASE PROJECT CONFIG ----
     const firebaseConfig = {
       apiKey: "AIzaSyDAA69QaUfiHy2V4YBkIzF932rb1_s29Eo",
       authDomain: "letter-learner-b8712.firebaseapp.com",
@@ -283,48 +276,36 @@
       appId: "1:704107548944:web:1434ebf02a6837a5301595"
     };
 
-    // ---- ADMIN ACCESS ----
-    // Only these email addresses see the Admin Panel. Replace with your real email(s).
-    // Match is case-insensitive.
+    // Only these emails see the Admin Panel.
     const ADMIN_EMAILS = ["mohammedseidmusteffa@gmail.com"];
 
     const firebaseApp = initializeApp(firebaseConfig);
     const auth = getAuth(firebaseApp);
     const db = getFirestore(firebaseApp);
 
-    // Expose Firebase pieces to the classic <script> below (kept non-module
-    // for simplicity, since it's mostly DOM/UI logic).
     window.__fb = {
-      auth, db, doc, getDoc, setDoc, onSnapshot,
+      auth, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot,
       createUserWithEmailAndPassword, signInWithEmailAndPassword,
       onAuthStateChanged, signOut, updateProfile, ADMIN_EMAILS
     };
 
-    // Kick off the app logic once this module has wired everything up.
     window.dispatchEvent(new Event('fb-ready'));
   </script>
 
   <script>
-    // Default content seeded into Firestore the very first time the app runs
-    // (i.e. if content/main doesn't exist yet).
-    const defaultData = {
+    // Structure doc (content/main) holds level/lesson METADATA only (small,
+    // always synced live). Each lesson's actual questions (including any
+    // images/audio) live in their own document under content/main/lessons/{id}
+    // so one media-heavy lesson can never block the rest of the curriculum.
+    const defaultIndex = {
       levels: [
-        {
-          id: 'lvl_1',
-          name: 'Level 1: Fundamentals',
-          lessons: [
-            {
-              id: 'les_1',
-              title: 'Letter A',
-              isCheckpoint: false,
-              passThreshold: 85,
-              questions: [
-                { id: 'q_1', symbol: 'A', img: '', audio: '', options: ['A', 'B', 'C', 'D'], correct: 'A' }
-              ]
-            }
-          ]
-        }
+        { id: 'lvl_1', name: 'Level 1: Fundamentals', lessons: [
+          { id: 'les_1', title: 'Letter A', isCheckpoint: false, passThreshold: 85 }
+        ]}
       ]
+    };
+    const defaultLessonQuestions = {
+      les_1: [{ id: 'q_1', symbol: 'A', img: '', audio: '', options: ['A', 'B', 'C', 'D'], correct: 'A' }]
     };
 
     function uid(prefix) {
@@ -332,10 +313,11 @@
     }
 
     // ---- STATE ----
-    let fb = null;               // set once Firebase module signals ready
-    let currentUser = null;      // Firebase Auth user object
+    let fb = null;
+    let currentUser = null;
     let isAdmin = false;
-    let appData = { levels: [] };
+    let appData = { levels: [] };                 // structure only
+    let lessonQuestionsCache = {};                 // lessonId -> questions[]
     let userProgress = { xp: 0, completedLessons: [], checkpointScores: {} };
 
     let currentLesson = null;
@@ -347,6 +329,8 @@
 
     let unsubContent = null;
     let unsubUser = null;
+
+    const MAX_DOC_BYTES = 900 * 1024; // stay safely under Firestore's 1MB doc limit
 
     window.addEventListener('fb-ready', () => {
       fb = window.__fb;
@@ -375,12 +359,10 @@
 
       const submitBtn = document.getElementById('auth-submit-btn');
       submitBtn.disabled = true;
-
       try {
         if (authMode === 'signup') {
           const cred = await fb.createUserWithEmailAndPassword(fb.auth, email, password);
           if (name) await fb.updateProfile(cred.user, { displayName: name });
-          // onAuthChanged will fire and set up the user's progress doc
         } else {
           await fb.signInWithEmailAndPassword(fb.auth, email, password);
         }
@@ -429,19 +411,14 @@
 
       await ensureUserDoc(user);
       listenToUserProgress(user);
-      listenToContent();
+      listenToContentIndex();
     }
 
     async function ensureUserDoc(user) {
       const ref = fb.doc(fb.db, 'users', user.uid);
       const snap = await fb.getDoc(ref);
       if (!snap.exists()) {
-        await fb.setDoc(ref, {
-          email: user.email,
-          xp: 0,
-          completedLessons: [],
-          checkpointScores: {}
-        });
+        await fb.setDoc(ref, { email: user.email, xp: 0, completedLessons: [], checkpointScores: {} });
       }
     }
 
@@ -450,52 +427,72 @@
       unsubUser = fb.onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const d = snap.data();
-        userProgress = {
-          xp: d.xp || 0,
-          completedLessons: d.completedLessons || [],
-          checkpointScores: d.checkpointScores || {}
-        };
+        userProgress = { xp: d.xp || 0, completedLessons: d.completedLessons || [], checkpointScores: d.checkpointScores || {} };
         document.getElementById('total-xp').innerText = userProgress.xp;
-        if (document.getElementById('student-home').classList.contains('active')) {
-          renderStudentHome();
-        }
+        if (document.getElementById('student-home').classList.contains('active')) renderStudentHome();
       });
     }
 
-    function listenToContent() {
+    function listenToContentIndex() {
       const ref = fb.doc(fb.db, 'content', 'main');
       unsubContent = fb.onSnapshot(ref, async (snap) => {
         if (!snap.exists()) {
-          // First run ever — seed default content (any logged-in user can do
-          // this once; afterwards it's just read/write per your security rules).
-          await fb.setDoc(ref, defaultData);
+          await fb.setDoc(ref, defaultIndex);
+          for (const lid of Object.keys(defaultLessonQuestions)) {
+            await fb.setDoc(fb.doc(fb.db, 'content', 'main', 'lessons', lid), { questions: defaultLessonQuestions[lid] });
+          }
           return;
         }
         appData = snap.data();
         if (!appData.levels) appData.levels = [];
         if (document.getElementById('student-home').classList.contains('active')) renderStudentHome();
-        if (document.getElementById('admin-view').classList.contains('active')) renderAdminPanel();
       });
     }
 
-    async function saveContent() {
+    async function saveIndex() {
       try {
-        const ref = fb.doc(fb.db, 'content', 'main');
-        await fb.setDoc(ref, appData);
+        await fb.setDoc(fb.doc(fb.db, 'content', 'main'), appData);
       } catch (e) {
-        console.error('Failed to save content:', e);
-        alert("Couldn't save changes. Check your internet connection, or the database may have hit a size limit — try smaller images/audio.");
+        console.error('Failed to save structure:', e);
+        alert("Couldn't save changes. Check your internet connection and try again.");
       }
+    }
+
+    async function fetchLessonQuestions(lessonId, forceRefresh = false) {
+      if (!forceRefresh && lessonQuestionsCache[lessonId]) return lessonQuestionsCache[lessonId];
+      const snap = await fb.getDoc(fb.doc(fb.db, 'content', 'main', 'lessons', lessonId));
+      const questions = snap.exists() ? (snap.data().questions || []) : [];
+      lessonQuestionsCache[lessonId] = questions;
+      return questions;
+    }
+
+    async function saveLessonQuestions(lessonId, questions) {
+      const estimatedBytes = new Blob([JSON.stringify(questions)]).size;
+      if (estimatedBytes > MAX_DOC_BYTES) {
+        alert(`This lesson's content is too large to save (${Math.round(estimatedBytes/1024)}KB). Try a smaller image, shorter audio, or split this into two lessons.`);
+        return false;
+      }
+      try {
+        await fb.setDoc(fb.doc(fb.db, 'content', 'main', 'lessons', lessonId), { questions });
+        lessonQuestionsCache[lessonId] = questions;
+        return true;
+      } catch (e) {
+        console.error('Failed to save lesson questions:', e);
+        alert("Couldn't save this question. Check your internet connection and try again.");
+        return false;
+      }
+    }
+
+    async function fetchAllLessonDocsForAdmin() {
+      const snap = await fb.getDocs(fb.collection(fb.db, 'content', 'main', 'lessons'));
+      snap.forEach(d => { lessonQuestionsCache[d.id] = d.data().questions || []; });
     }
 
     async function saveUserProgress() {
       try {
-        const ref = fb.doc(fb.db, 'users', currentUser.uid);
-        await fb.setDoc(ref, {
-          email: currentUser.email,
-          xp: userProgress.xp,
-          completedLessons: userProgress.completedLessons,
-          checkpointScores: userProgress.checkpointScores
+        await fb.setDoc(fb.doc(fb.db, 'users', currentUser.uid), {
+          email: currentUser.email, xp: userProgress.xp,
+          completedLessons: userProgress.completedLessons, checkpointScores: userProgress.checkpointScores
         });
         return true;
       } catch (e) {
@@ -503,6 +500,38 @@
         return false;
       }
     }
+
+    // --- IMAGE COMPRESSION ---
+    // Resizes to a max dimension and re-encodes as JPEG so phone photos
+    // (often several MB) shrink to well under our per-lesson budget.
+    function compressImage(file, maxDim = 800, quality = 0.7) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > height && width > maxDim) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+            else if (height > maxDim) { width = Math.round(width * (maxDim / height)); height = maxDim; }
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
 
     // --- NAVIGATION ---
     function showView(viewId) {
@@ -515,12 +544,11 @@
         document.getElementById('admin-view').classList.remove('active');
         return;
       }
-
       if (viewId === 'student-home') renderStudentHome();
       if (viewId === 'admin-view') renderAdminPanel();
     }
 
-    // --- STUDENT PROGRESSION & SEQUENTIAL + CHECKPOINT UNLOCK ---
+    // --- STUDENT PROGRESSION & CHECKPOINT UNLOCK ---
     function isLessonCleared(lesson) {
       if (lesson.isCheckpoint) {
         const score = userProgress.checkpointScores[lesson.id];
@@ -533,9 +561,7 @@
       const container = document.getElementById('levels-container');
       container.innerHTML = '';
 
-      let totalLessons = 0;
-      let clearedCount = 0;
-      let previousLessonCleared = true;
+      let totalLessons = 0, clearedCount = 0, previousLessonCleared = true;
 
       appData.levels.forEach((level) => {
         const levelHeader = document.createElement('div');
@@ -551,7 +577,6 @@
           const cleared = isLessonCleared(lesson);
           if (cleared) clearedCount++;
           const isUnlocked = previousLessonCleared;
-          const hasQuestions = lesson.questions && lesson.questions.length > 0;
           const attempted = lesson.isCheckpoint && typeof userProgress.checkpointScores[lesson.id] === 'number';
 
           const card = document.createElement('div');
@@ -560,8 +585,6 @@
           let actionButtons = '';
           if (cleared) {
             actionButtons = `<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="event.stopPropagation(); startLesson('${lesson.id}')">Review</button>`;
-          } else if (isUnlocked && !hasQuestions) {
-            actionButtons = `<div style="font-size:0.75rem; color:#c62828; margin-top:6px;">No questions yet</div>`;
           } else if (isUnlocked && lesson.isCheckpoint && attempted) {
             actionButtons = `<div style="font-size:0.75rem; color:#E65100; margin-top:6px;">Last score: ${userProgress.checkpointScores[lesson.id]}% — need 85%</div>`;
           }
@@ -572,9 +595,7 @@
             ${actionButtons}
           `;
 
-          if (isUnlocked && hasQuestions) {
-            card.onclick = () => startLesson(lesson.id);
-          }
+          if (isUnlocked) card.onclick = () => startLesson(lesson.id);
 
           grid.appendChild(card);
           previousLessonCleared = cleared;
@@ -589,42 +610,31 @@
     }
 
     // --- QUIZ & XP LOGIC ---
-    function startLesson(lessonId) {
-      let foundLesson = null;
-      appData.levels.forEach(l => {
-        const les = l.lessons.find(s => s.id === lessonId);
-        if (les) foundLesson = les;
-      });
+    async function startLesson(lessonId) {
+      let lessonMeta = null;
+      appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === lessonId); if (les) lessonMeta = les; });
+      if (!lessonMeta) return;
 
-      if (!foundLesson || !foundLesson.questions || foundLesson.questions.length === 0) {
-        alert("This lesson has no questions yet!");
-        return;
-      }
+      const questions = await fetchLessonQuestions(lessonId);
+      if (!questions || questions.length === 0) { alert("This lesson has no questions yet!"); return; }
 
-      currentLesson = foundLesson;
-      currentQuestionIdx = 0;
-      lessonScore = 0;
-      lessonXPEarned = 0;
-      document.getElementById('checkpoint-banner').style.display = foundLesson.isCheckpoint ? 'block' : 'none';
+      currentLesson = { ...lessonMeta, questions };
+      currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
+      document.getElementById('checkpoint-banner').style.display = lessonMeta.isCheckpoint ? 'block' : 'none';
       showView('quiz-view');
       renderQuestion();
     }
 
     function retryLesson() {
       if (!currentLesson) { showView('student-home'); return; }
-      currentQuestionIdx = 0;
-      lessonScore = 0;
-      lessonXPEarned = 0;
+      currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
       showView('quiz-view');
       renderQuestion();
     }
 
     function shuffleArray(arr) {
       const a = arr.slice();
-      for (let i = a.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [a[i], a[j]] = [a[j], a[i]];
-      }
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
       return a;
     }
 
@@ -633,8 +643,7 @@
       document.getElementById('quiz-progress-num').innerText = `Question ${currentQuestionIdx + 1}/${currentLesson.questions.length}`;
       document.getElementById('next-btn').style.display = 'none';
 
-      const symbolEl = document.getElementById('quiz-symbol');
-      symbolEl.innerText = q.symbol || '';
+      document.getElementById('quiz-symbol').innerText = q.symbol || '';
 
       const imgEl = document.getElementById('quiz-image');
       if (q.img) { imgEl.src = q.img; imgEl.style.display = 'block'; } else { imgEl.style.display = 'none'; }
@@ -645,8 +654,7 @@
 
       const optionsContainer = document.getElementById('options-container');
       optionsContainer.innerHTML = '';
-      const shuffledOptions = shuffleArray(q.options.filter(o => o.trim() !== ''));
-      shuffledOptions.forEach(opt => {
+      shuffleArray(q.options.filter(o => o.trim() !== '')).forEach(opt => {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.innerText = opt;
@@ -665,13 +673,10 @@
 
       if (selectedOpt.trim().toLowerCase() === correctOpt.trim().toLowerCase()) {
         selectedBtn.classList.add('correct');
-        lessonScore++;
-        lessonXPEarned += 10;
+        lessonScore++; lessonXPEarned += 10;
       } else {
         selectedBtn.classList.add('wrong');
-        allBtns.forEach(b => {
-          if (b.innerText.trim().toLowerCase() === correctOpt.trim().toLowerCase()) b.classList.add('correct');
-        });
+        allBtns.forEach(b => { if (b.innerText.trim().toLowerCase() === correctOpt.trim().toLowerCase()) b.classList.add('correct'); });
       }
       document.getElementById('next-btn').style.display = 'block';
     }
@@ -697,18 +702,14 @@
 
       if (isCheckpoint) {
         userProgress.checkpointScores[currentLesson.id] = pct;
-        if (passed && !userProgress.completedLessons.includes(currentLesson.id)) {
-          userProgress.completedLessons.push(currentLesson.id);
-        }
+        if (passed && !userProgress.completedLessons.includes(currentLesson.id)) userProgress.completedLessons.push(currentLesson.id);
       } else if (!userProgress.completedLessons.includes(currentLesson.id)) {
         userProgress.completedLessons.push(currentLesson.id);
       }
 
       const ok = await saveUserProgress();
       if (!ok) {
-        userProgress.xp = prevXP;
-        userProgress.completedLessons = prevCompleted;
-        userProgress.checkpointScores = prevScores;
+        userProgress.xp = prevXP; userProgress.completedLessons = prevCompleted; userProgress.checkpointScores = prevScores;
         alert("Couldn't save your progress — check your internet connection and try again.");
         showView('student-home');
         return;
@@ -735,12 +736,11 @@
         subtext.innerText = '';
         retryBtn.style.display = 'none';
       }
-
       showView('completion-view');
     }
 
-    // --- ADMIN PANEL MANAGEMENT ---
-    function renderAdminPanel() {
+    // --- ADMIN PANEL ---
+    async function renderAdminPanel() {
       if (!isAdmin) return;
 
       const lvlSelect = document.getElementById('lesson-level-select');
@@ -760,6 +760,10 @@
         treeContainer.innerHTML = '<p style="color:#666;">No levels yet. Create one above to get started.</p>';
         return;
       }
+
+      treeContainer.innerHTML = '<p style="color:#999; font-size:0.85rem;">Loading questions…</p>';
+      await fetchAllLessonDocsForAdmin();
+
       let out = '';
       appData.levels.forEach(l => {
         out += `<details><summary><span>📂 ${l.name}</span><div>
@@ -770,23 +774,22 @@
         if (l.lessons.length === 0) out += `<p style="color:#999; font-size:0.9rem;">No lessons in this level yet.</p>`;
 
         l.lessons.forEach(les => {
-          out += `<details><summary><span>${les.isCheckpoint ? '🚩' : '📖'} ${les.title} (${les.questions.length} Qs)${les.isCheckpoint ? ' — Checkpoint' : ''}</span><div>
+          const qs = lessonQuestionsCache[les.id] || [];
+          out += `<details><summary><span>${les.isCheckpoint ? '🚩' : '📖'} ${les.title} (${qs.length} Qs)${les.isCheckpoint ? ' — Checkpoint' : ''}</span><div>
             <button class="btn btn-sm btn-warning" onclick="editLesson('${les.id}')">Edit</button>
             <button class="btn btn-sm btn-danger" onclick="deleteLesson('${les.id}')">Delete</button>
           </div></summary><div style="padding-left:10px; margin-top:5px;">`;
 
-          if (les.questions.length === 0) out += `<p style="color:#999; font-size:0.85rem;">No questions yet — this lesson can't be played until you add one.</p>`;
+          if (qs.length === 0) out += `<p style="color:#999; font-size:0.85rem;">No questions yet — this lesson can't be played until you add one.</p>`;
 
-          les.questions.forEach((q, idx) => {
+          qs.forEach((q, idx) => {
             out += `<div class="q-admin-item"><span>Q${idx+1}: <strong>${q.symbol || 'No Symbol'}</strong> (${q.correct})</span><div>
-              <button class="btn btn-sm btn-warning" onclick="editQuestion('${q.id}')">Edit</button>
-              <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${q.id}')">Delete</button>
+              <button class="btn btn-sm btn-warning" onclick="editQuestion('${les.id}','${q.id}')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${les.id}','${q.id}')">Delete</button>
             </div></div>`;
           });
-
           out += `</div></details>`;
         });
-
         out += `</div></details>`;
       });
       treeContainer.innerHTML = out;
@@ -796,15 +799,10 @@
       const id = document.getElementById('edit-level-id').value;
       const name = document.getElementById('new-level-name').value.trim();
       if (!name) return alert('Enter level name');
-
-      if (id) {
-        const lvl = appData.levels.find(l => l.id === id);
-        if (lvl) lvl.name = name;
-      } else {
-        appData.levels.push({ id: uid('lvl'), name, lessons: [] });
-      }
+      if (id) { const lvl = appData.levels.find(l => l.id === id); if (lvl) lvl.name = name; }
+      else { appData.levels.push({ id: uid('lvl'), name, lessons: [] }); }
       resetLevelForm();
-      saveContent();
+      saveIndex().then(renderAdminPanel);
     }
 
     function editLevel(id) {
@@ -823,11 +821,13 @@
       document.getElementById('cancel-level-edit').style.display = 'none';
     }
 
-    function deleteLevel(id) {
-      if (confirm('Delete this level and all its lessons?')) {
-        appData.levels = appData.levels.filter(l => l.id !== id);
-        saveContent();
-      }
+    async function deleteLevel(id) {
+      if (!confirm('Delete this level and all its lessons?')) return;
+      const lvl = appData.levels.find(l => l.id === id);
+      if (lvl) { for (const les of lvl.lessons) { await fb.deleteDoc(fb.doc(fb.db, 'content', 'main', 'lessons', les.id)).catch(()=>{}); } }
+      appData.levels = appData.levels.filter(l => l.id !== id);
+      await saveIndex();
+      renderAdminPanel();
     }
 
     function saveLesson() {
@@ -838,24 +838,20 @@
       if (!title) return alert('Enter lesson title');
 
       if (id) {
-        appData.levels.forEach(l => {
-          const les = l.lessons.find(s => s.id === id);
-          if (les) { les.title = title; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; }
-        });
+        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) { les.title = title; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; } });
       } else {
         if (!lvlId) return alert('Create a level first, then select it here.');
         const level = appData.levels.find(l => l.id === lvlId);
-        if (level) level.lessons.push({ id: uid('les'), title, isCheckpoint, passThreshold: 85, questions: [] });
+        if (level) level.lessons.push({ id: uid('les'), title, isCheckpoint, passThreshold: 85 });
       }
       resetLessonForm();
-      saveContent();
+      saveIndex().then(renderAdminPanel);
     }
 
     function editLesson(id) {
       let foundLes = null;
       appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) foundLes = les; });
       if (!foundLes) return;
-
       document.getElementById('edit-lesson-id').value = foundLes.id;
       document.getElementById('new-lesson-title').value = foundLes.title;
       document.getElementById('new-lesson-checkpoint').checked = !!foundLes.isCheckpoint;
@@ -871,11 +867,18 @@
       document.getElementById('cancel-lesson-edit').style.display = 'none';
     }
 
-    function deleteLesson(id) {
-      if (confirm('Delete this lesson?')) {
-        appData.levels.forEach(l => { l.lessons = l.lessons.filter(les => les.id !== id); });
-        saveContent();
-      }
+    async function deleteLesson(id) {
+      if (!confirm('Delete this lesson?')) return;
+      appData.levels.forEach(l => { l.lessons = l.lessons.filter(les => les.id !== id); });
+      await fb.deleteDoc(fb.doc(fb.db, 'content', 'main', 'lessons', id)).catch(()=>{});
+      delete lessonQuestionsCache[id];
+      await saveIndex();
+      renderAdminPanel();
+    }
+
+    function onQuestionLessonChange() {
+      document.getElementById('q-image-current').innerText = '';
+      document.getElementById('q-audio-current').innerText = '';
     }
 
     async function saveQuestion() {
@@ -887,7 +890,7 @@
       const imgFile = document.getElementById('q-image-file').files[0];
       const audioFile = document.getElementById('q-audio-file').files[0];
 
-      if (!qId && !lesId) return alert('Create a lesson first, then select it here.');
+      if (!lesId) return alert('Create a lesson first, then select it here.');
       if (!optionsRaw || !correct) return alert('Please fill in options and correct answer fields.');
 
       const options = optionsRaw.split(',').map(s => s.trim()).filter(s => s !== '');
@@ -896,35 +899,32 @@
         return alert(`The correct answer ("${correct}") must exactly match one of the answer choices: ${options.join(', ')}`);
       }
 
-      let imgBase64 = imgFile ? await toBase64(imgFile) : null;
+      let imgBase64 = imgFile ? await compressImage(imgFile) : null;
       let audioBase64 = audioFile ? await toBase64(audioFile) : null;
 
+      const questions = await fetchLessonQuestions(lesId);
+
       if (qId) {
-        appData.levels.forEach(l => l.lessons.forEach(les => {
-          const q = les.questions.find(item => item.id === qId);
-          if (q) {
-            q.symbol = symbol; q.options = options; q.correct = correct;
-            if (imgBase64 !== null) q.img = imgBase64;
-            if (audioBase64 !== null) q.audio = audioBase64;
-          }
-        }));
-      } else {
-        let foundLesson = null;
-        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === lesId); if (les) foundLesson = les; });
-        if (foundLesson) {
-          foundLesson.questions.push({ id: uid('q'), symbol, img: imgBase64 || '', audio: audioBase64 || '', options, correct });
+        const q = questions.find(item => item.id === qId);
+        if (q) {
+          q.symbol = symbol; q.options = options; q.correct = correct;
+          if (imgBase64 !== null) q.img = imgBase64;
+          if (audioBase64 !== null) q.audio = audioBase64;
         }
+      } else {
+        questions.push({ id: uid('q'), symbol, img: imgBase64 || '', audio: audioBase64 || '', options, correct });
       }
 
-      resetQuestionForm();
-      saveContent();
+      const saved = await saveLessonQuestions(lesId, questions);
+      if (saved) { resetQuestionForm(); renderAdminPanel(); }
     }
 
-    function editQuestion(qId) {
-      let foundQ = null;
-      appData.levels.forEach(l => l.lessons.forEach(les => { const q = les.questions.find(item => item.id === qId); if (q) foundQ = q; }));
+    function editQuestion(lesId, qId) {
+      const questions = lessonQuestionsCache[lesId] || [];
+      const foundQ = questions.find(item => item.id === qId);
       if (!foundQ) return;
 
+      document.getElementById('question-lesson-select').value = lesId;
       document.getElementById('edit-question-id').value = foundQ.id;
       document.getElementById('q-symbol').value = foundQ.symbol;
       document.getElementById('q-options').value = foundQ.options.join(', ');
@@ -933,6 +933,7 @@
       document.getElementById('q-audio-current').innerText = foundQ.audio ? 'Current: audio attached (upload a new file to replace it)' : '';
       document.getElementById('question-form-title').innerText = "Edit Question";
       document.getElementById('cancel-question-edit').style.display = 'inline-block';
+      window.scrollTo({ top: document.getElementById('question-form-title').offsetTop - 20, behavior: 'smooth' });
     }
 
     function resetQuestionForm() {
@@ -948,19 +949,12 @@
       document.getElementById('cancel-question-edit').style.display = 'none';
     }
 
-    function deleteQuestion(qId) {
-      if (confirm('Delete this question?')) {
-        appData.levels.forEach(l => l.lessons.forEach(les => { les.questions = les.questions.filter(q => q.id !== qId); }));
-        saveContent();
-      }
+    async function deleteQuestion(lesId, qId) {
+      if (!confirm('Delete this question?')) return;
+      const questions = (lessonQuestionsCache[lesId] || []).filter(q => q.id !== qId);
+      const saved = await saveLessonQuestions(lesId, questions);
+      if (saved) renderAdminPanel();
     }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
   </script>
 </body>
 </html>
