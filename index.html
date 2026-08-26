@@ -90,28 +90,28 @@
 </head>
 <body>
 
-  <div id="loading-view" class="loading-msg">Loading LetterLearner…</div>
+  <div id="loading-view" class="loading-msg">🔤 LetterLearner እየተጫነ ነው…</div>
 
   <div id="auth-view" class="auth-wrap" style="display:none;">
     <div class="auth-card">
       <h1 style="color:var(--primary); margin-top:0;">🔤 LetterLearner</h1>
       <div class="auth-tabs">
-        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Log In</div>
-        <div id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
+        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">ግባ</div>
+        <div id="tab-signup" class="auth-tab" onclick="switchAuthTab('signup')">ተመዝገብ</div>
       </div>
       <div class="form-group">
-        <label>Email</label>
+        <label>ኢሜይል</label>
         <input type="email" id="auth-email" placeholder="you@example.com">
       </div>
       <div class="form-group">
-        <label>Password</label>
-        <input type="password" id="auth-password" placeholder="At least 6 characters">
+        <label>የይለፍ ቃል</label>
+        <input type="password" id="auth-password" placeholder="ቢያንስ 6 ቁምፊዎች">
       </div>
       <div id="signup-name-group" class="form-group" style="display:none;">
-        <label>Your Name</label>
-        <input type="text" id="auth-name" placeholder="e.g. Abel">
+        <label>ስምዎ</label>
+        <input type="text" id="auth-name" placeholder="ለምሳሌ፦ አበበ">
       </div>
-      <button id="auth-submit-btn" class="btn" style="width:100%; padding:12px;" onclick="handleAuthSubmit()">Log In</button>
+      <button id="auth-submit-btn" class="btn" style="width:100%; padding:12px;" onclick="handleAuthSubmit()">ግባ</button>
       <div id="auth-error" class="auth-error"></div>
     </div>
   </div>
@@ -123,25 +123,25 @@
         <div class="xp-badge">⚡ <span id="total-xp">0</span> XP</div>
         <span id="user-email-label" style="font-size:0.8rem; color:#888;"></span>
         <button id="admin-mode-btn" class="btn btn-outline" style="display:none;" onclick="showView('admin-view')">Admin</button>
-        <button class="btn btn-outline" onclick="doLogout()">Log Out</button>
+        <button class="btn btn-outline" onclick="doLogout()">ውጣ</button>
       </div>
     </header>
 
     <main>
       <div id="student-home" class="view active">
         <div class="progress-card">
-          <h2 style="margin:0;">Your Progress</h2>
+          <h2 style="margin:0;">የእርስዎ እድገት</h2>
           <div class="progress-bar-bg">
             <div id="overall-progress" class="progress-bar-fill"></div>
           </div>
-          <p id="progress-text" style="margin: 10px 0 0 0; font-weight: 600; color: #666;">0 / 0 Lessons Completed</p>
+          <p id="progress-text" style="margin: 10px 0 0 0; font-weight: 600; color: #666;">0 / 0 ትምህርቶች ተጠናቅቀዋል</p>
         </div>
         <div id="levels-container"></div>
       </div>
 
       <div id="video-view" class="view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-          <button class="btn btn-outline" onclick="showView('student-home')">← Back</button>
+          <button class="btn btn-outline" onclick="showView('student-home')">← ተመለስ</button>
           <span id="video-view-title" style="font-weight:bold; color:#666;"></span>
         </div>
         <div id="video-container" class="video-container"></div>
@@ -149,42 +149,42 @@
 
       <div id="quiz-view" class="view">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-          <button class="btn btn-outline" onclick="showView('student-home')">← Exit</button>
+          <button class="btn btn-outline" onclick="showView('student-home')">← ውጣ</button>
           <span id="quiz-progress-num" style="font-weight:bold; color:#666;">Question 1/1</span>
         </div>
 
         <div class="quiz-card">
-          <div id="checkpoint-banner" class="checkpoint-banner" style="display:none;">🚩 Checkpoint — Score 85%+ to unlock the next level</div>
+          <div id="checkpoint-banner" class="checkpoint-banner" style="display:none;">🚩 መልቀቂያ ፈተና — ቀጣዩን ደረጃ ለመክፈት 85%+ ማምጣት አለብዎት</div>
           <div class="big-symbol-box">
             <div id="quiz-symbol" class="big-symbol"></div>
             <img id="quiz-image" class="symbol-img" style="display:none;" alt="Lesson Visual">
-            <button id="quiz-audio-btn" class="audio-btn" onclick="playQuestionAudio()" style="display:none;">🔊 Listen Sound</button>
+            <button id="quiz-audio-btn" class="audio-btn" onclick="playQuestionAudio()" style="display:none;">🔊 ድምጽ ያዳምጡ</button>
           </div>
 
-          <h3>Select the correct answer:</h3>
+          <h3>ትክክለኛውን መልስ ይምረጡ፦</h3>
           <div id="options-container" class="options-grid"></div>
 
-          <button id="next-btn" class="btn" style="width:100%; margin-top:20px; padding:15px; font-size:1.1rem; display:none;" onclick="nextQuestion()">Next Question →</button>
+          <button id="next-btn" class="btn" style="width:100%; margin-top:20px; padding:15px; font-size:1.1rem; display:none;" onclick="nextQuestion()">የሚቀጥለው ጥያቄ →</button>
         </div>
       </div>
 
       <div id="completion-view" class="view">
         <div class="completion-card">
           <div id="completion-emoji" style="font-size:4rem;">🎉</div>
-          <h2 id="completion-title">Lesson Completed!</h2>
+          <h2 id="completion-title">ትምህርቱ ተጠናቋል!</h2>
           <p id="completion-subtext" style="color:#888;"></p>
           <div class="stat-box">
             <div class="stat-item">
-              <div>Score</div>
+              <div>ውጤት</div>
               <div id="summary-score" class="stat-val">100%</div>
             </div>
             <div class="stat-item">
-              <div>XP Earned</div>
+              <div>የተገኘ XP</div>
               <div id="summary-xp" class="stat-val">+25 XP</div>
             </div>
           </div>
-          <button id="retry-btn" class="btn btn-warning" style="width:100%; padding:15px; font-size:1.1rem; margin-bottom:10px; display:none;" onclick="retryLesson()">Try Again</button>
-          <button class="btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="showView('student-home')">Continue</button>
+          <button id="retry-btn" class="btn btn-warning" style="width:100%; padding:15px; font-size:1.1rem; margin-bottom:10px; display:none;" onclick="retryLesson()">እንደገና ሞክር</button>
+          <button class="btn" style="width:100%; padding:15px; font-size:1.1rem;" onclick="showView('student-home')">ቀጥል</button>
         </div>
       </div>
 
@@ -225,6 +225,10 @@
             <input type="checkbox" id="new-lesson-checkpoint">
             <label style="margin:0;">This is a Checkpoint (requires 85% to pass and unlock the next level)</label>
           </div>
+          <div class="form-group checkbox">
+            <input type="checkbox" id="new-lesson-shuffle" checked>
+            <label style="margin:0;">Shuffle question order each time (recommended for variety)</label>
+          </div>
           <button class="btn" onclick="saveLesson()">Save Lesson</button>
           <button id="cancel-lesson-edit" class="btn btn-outline" style="display:none;" onclick="resetLessonForm()">Cancel Edit</button>
         </div>
@@ -232,9 +236,11 @@
         <div class="admin-card">
           <h3 id="question-form-title">Add Question to Lesson</h3>
           <input type="hidden" id="edit-question-id">
+          <input type="hidden" id="edit-question-original-lesson">
           <div class="form-group">
             <label>Select Lesson</label>
             <select id="question-lesson-select" onchange="onQuestionLessonChange()"></select>
+            <small id="move-lesson-hint" style="color:#E65100; display:none;">This will move the question to the selected lesson.</small>
           </div>
           <div class="form-group">
             <label>Displayed Letter / Symbol</label>
@@ -267,6 +273,7 @@
         <div class="admin-card">
           <h3>Content Structure & Management</h3>
           <button class="btn btn-sm btn-outline" style="margin-bottom:10px;" onclick="renderAdminPanel()">↻ Refresh</button>
+          <button class="btn btn-sm btn-secondary" style="margin-bottom:10px; margin-left:8px;" onclick="exportAllContent()">⬇ Export Backup (JSON)</button>
           <div id="admin-structure-list"></div>
         </div>
       </div>
@@ -337,6 +344,7 @@
     let userProgress = { xp: 0, completedLessons: [], checkpointScores: {} };
 
     let currentLesson = null;
+    let copySourceMedia = null; // { img, audio } carried over when duplicating a question
     let currentQuestionIdx = 0;
     let lessonScore = 0;
     let lessonXPEarned = 0;
@@ -359,7 +367,7 @@
       document.getElementById('tab-login').classList.toggle('active', mode === 'login');
       document.getElementById('tab-signup').classList.toggle('active', mode === 'signup');
       document.getElementById('signup-name-group').style.display = mode === 'signup' ? 'block' : 'none';
-      document.getElementById('auth-submit-btn').innerText = mode === 'signup' ? 'Create Account' : 'Log In';
+      document.getElementById('auth-submit-btn').innerText = mode === 'signup' ? 'መለያ ፍጠር' : 'ግባ';
       document.getElementById('auth-error').innerText = '';
     }
 
@@ -391,15 +399,15 @@
 
     function friendlyAuthError(code) {
       const map = {
-        'auth/email-already-in-use': 'That email already has an account — try Log In instead.',
-        'auth/invalid-email': 'That email address looks invalid.',
-        'auth/weak-password': 'Password must be at least 6 characters.',
-        'auth/user-not-found': "No account found with that email — try Sign Up.",
-        'auth/wrong-password': 'Incorrect password.',
-        'auth/invalid-credential': 'Incorrect email or password.',
-        'auth/too-many-requests': 'Too many attempts — please wait a bit and try again.'
+        'auth/email-already-in-use': 'ይህ ኢሜይል አስቀድሞ መለያ አለው — በምትኩ "ግባ" የሚለውን ይሞክሩ።',
+        'auth/invalid-email': 'ያስገቡት ኢሜይል ትክክል አይመስልም።',
+        'auth/weak-password': 'የይለፍ ቃል ቢያንስ 6 ቁምፊዎች ሊኖረው ይገባል።',
+        'auth/user-not-found': 'በዚህ ኢሜይል የተመዘገበ መለያ አልተገኘም — "ተመዝገብ" የሚለውን ይሞክሩ።',
+        'auth/wrong-password': 'የይለፍ ቃል ትክክል አይደለም።',
+        'auth/invalid-credential': 'ኢሜይል ወይም የይለፍ ቃል ትክክል አይደለም።',
+        'auth/too-many-requests': 'በጣም ብዙ ሙከራዎች ተደርገዋል — እባክዎ ትንሽ ቆይተው እንደገና ይሞክሩ።'
       };
-      return map[code] || 'Something went wrong. Please try again.';
+      return map[code] || 'የሆነ ስህተት ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።';
     }
 
     function doLogout() {
@@ -504,6 +512,41 @@
       snap.forEach(d => { lessonQuestionsCache[d.id] = d.data().questions || []; });
     }
 
+    // One-tap backup: pulls the full structure + every lesson's questions
+    // (including embedded images/audio) into a single downloadable file.
+    // Keep a copy of this somewhere safe (email it to yourself, save to
+    // Google Drive, etc.) after any big content session.
+    async function exportAllContent() {
+      const btn = event.target;
+      const originalLabel = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = 'Preparing backup…';
+      try {
+        await fetchAllLessonDocsForAdmin();
+        const backup = {
+          exportedAt: new Date().toISOString(),
+          levels: appData.levels.map(l => ({
+            ...l,
+            lessons: l.lessons.map(les => ({ ...les, questions: lessonQuestionsCache[les.id] || [] }))
+          }))
+        };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `letterlearner-backup-${dateStr}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error('Backup failed:', e);
+        alert("Couldn't create the backup. Check your internet connection and try again.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = originalLabel;
+      }
+    }
+
     async function saveUserProgress() {
       try {
         await fb.setDoc(fb.doc(fb.db, 'users', currentUser.uid), {
@@ -555,7 +598,7 @@
       document.getElementById(viewId).classList.add('active');
 
       if (viewId === 'admin-view' && !isAdmin) {
-        alert("You don't have admin access on this account.");
+        alert("በዚህ መለያ የአስተዳዳሪ መዳረሻ የለዎትም።");
         document.getElementById('student-home').classList.add('active');
         document.getElementById('admin-view').classList.remove('active');
         return;
@@ -583,7 +626,7 @@
         const levelHeader = document.createElement('div');
         levelHeader.className = 'level-title';
         levelHeader.innerHTML = `<span>${level.name}</span>` +
-          (level.videoUrl ? `<button class="level-video-btn" onclick="showLevelVideo('${level.id}')">🎥 Watch Video</button>` : '');
+          (level.videoUrl ? `<button class="level-video-btn" onclick="showLevelVideo('${level.id}')">🎥 ቪዲዮ ይመልከቱ</button>` : '');
         container.appendChild(levelHeader);
 
         const grid = document.createElement('div');
@@ -601,9 +644,9 @@
 
           let actionButtons = '';
           if (cleared) {
-            actionButtons = `<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="event.stopPropagation(); startLesson('${lesson.id}')">Review</button>`;
+            actionButtons = `<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="event.stopPropagation(); startLesson('${lesson.id}')">ድገም</button>`;
           } else if (isUnlocked && lesson.isCheckpoint && attempted) {
-            actionButtons = `<div style="font-size:0.75rem; color:#E65100; margin-top:6px;">Last score: ${userProgress.checkpointScores[lesson.id]}% — need 85%</div>`;
+            actionButtons = `<div style="font-size:0.75rem; color:#E65100; margin-top:6px;">የመጨረሻ ውጤት፦ ${userProgress.checkpointScores[lesson.id]}% — 85% ያስፈልጋል</div>`;
           }
 
           card.innerHTML = `
@@ -623,7 +666,7 @@
 
       const progressPct = totalLessons > 0 ? (clearedCount / totalLessons) * 100 : 0;
       document.getElementById('overall-progress').style.width = `${progressPct}%`;
-      document.getElementById('progress-text').innerText = `${clearedCount} / ${totalLessons} Lessons Completed`;
+      document.getElementById('progress-text').innerText = `${clearedCount} / ${totalLessons} ትምህርቶች ተጠናቅቀዋል`;
     }
 
     // --- QUIZ & XP LOGIC ---
@@ -632,8 +675,9 @@
       appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === lessonId); if (les) lessonMeta = les; });
       if (!lessonMeta) return;
 
-      const questions = await fetchLessonQuestions(lessonId);
-      if (!questions || questions.length === 0) { alert("This lesson has no questions yet!"); return; }
+      const fetchedQuestions = await fetchLessonQuestions(lessonId);
+      if (!fetchedQuestions || fetchedQuestions.length === 0) { alert("ይህ ትምህርት እስካሁን ጥያቄዎች የሉትም!"); return; }
+      const questions = lessonMeta.shuffleQuestions !== false ? shuffleArray(fetchedQuestions) : fetchedQuestions.slice();
 
       currentLesson = { ...lessonMeta, questions };
       currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
@@ -644,6 +688,7 @@
 
     function retryLesson() {
       if (!currentLesson) { showView('student-home'); return; }
+      if (currentLesson.shuffleQuestions !== false) currentLesson.questions = shuffleArray(currentLesson.questions);
       currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
       showView('quiz-view');
       renderQuestion();
@@ -657,7 +702,7 @@
 
     function renderQuestion() {
       const q = currentLesson.questions[currentQuestionIdx];
-      document.getElementById('quiz-progress-num').innerText = `Question ${currentQuestionIdx + 1}/${currentLesson.questions.length}`;
+      document.getElementById('quiz-progress-num').innerText = `ጥያቄ ${currentQuestionIdx + 1}/${currentLesson.questions.length}`;
       document.getElementById('next-btn').style.display = 'none';
 
       document.getElementById('quiz-symbol').innerText = q.symbol || '';
@@ -756,7 +801,7 @@
       const ok = await saveUserProgress();
       if (!ok) {
         userProgress.xp = prevXP; userProgress.completedLessons = prevCompleted; userProgress.checkpointScores = prevScores;
-        alert("Couldn't save your progress — check your internet connection and try again.");
+        alert("እድገትዎን ማስቀመጥ አልተቻለም — እባክዎ የኢንተርኔት ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።");
         showView('student-home');
         return;
       }
@@ -768,17 +813,17 @@
       const subtext = document.getElementById('completion-subtext');
       if (isCheckpoint && !passed) {
         document.getElementById('completion-emoji').innerText = '🚩';
-        document.getElementById('completion-title').innerText = 'Almost there!';
-        subtext.innerText = `You need ${threshold}% to pass this checkpoint and unlock the next level. Review and try again!`;
+        document.getElementById('completion-title').innerText = 'ጥቂት ቀርቷል!';
+        subtext.innerText = `ይህን የመልቀቂያ ፈተና ለማለፍ እና ቀጣዩን ደረጃ ለመክፈት ${threshold}% ያስፈልግዎታል። ደግመው ይሞክሩ!`;
         retryBtn.style.display = 'block';
       } else if (pct < 70) {
         document.getElementById('completion-emoji').innerText = '💪';
-        document.getElementById('completion-title').innerText = 'Nice Try!';
+        document.getElementById('completion-title').innerText = 'ጥሩ ሙከራ ነበር!';
         subtext.innerText = '';
         retryBtn.style.display = 'block';
       } else {
         document.getElementById('completion-emoji').innerText = '🎉';
-        document.getElementById('completion-title').innerText = isCheckpoint ? 'Checkpoint Passed!' : 'Lesson Completed!';
+        document.getElementById('completion-title').innerText = isCheckpoint ? 'የመልቀቂያ ፈተናውን አልፈዋል!' : 'ትምህርቱ ተጠናቋል!';
         subtext.innerText = '';
         retryBtn.style.display = 'none';
       }
@@ -830,6 +875,7 @@
 
           qs.forEach((q, idx) => {
             out += `<div class="q-admin-item"><span>Q${idx+1}: <strong>${q.symbol || 'No Symbol'}</strong> (${q.correct})</span><div>
+              <button class="btn btn-sm btn-secondary" onclick="copyQuestion('${les.id}','${q.id}')">Copy</button>
               <button class="btn btn-sm btn-warning" onclick="editQuestion('${les.id}','${q.id}')">Edit</button>
               <button class="btn btn-sm btn-danger" onclick="deleteQuestion('${les.id}','${q.id}')">Delete</button>
             </div></div>`;
@@ -893,7 +939,7 @@
       if (embedUrl) {
         container.innerHTML = `<iframe src="${embedUrl}" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
       } else {
-        container.innerHTML = `<p style="color:#c62828; padding:20px;">That video link doesn't look like a valid YouTube link.</p>`;
+        container.innerHTML = `<p style="color:#c62828; padding:20px;">ያ የቪዲዮ ማስፈንጠሪያ ትክክለኛ የYouTube ማስፈንጠሪያ አይመስልም።</p>`;
       }
       showView('video-view');
     }
@@ -912,14 +958,15 @@
       const lvlId = document.getElementById('lesson-level-select').value;
       const title = document.getElementById('new-lesson-title').value.trim();
       const isCheckpoint = document.getElementById('new-lesson-checkpoint').checked;
+      const shuffleQuestions = document.getElementById('new-lesson-shuffle').checked;
       if (!title) return alert('Enter lesson title');
 
       if (id) {
-        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) { les.title = title; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; } });
+        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) { les.title = title; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; les.shuffleQuestions = shuffleQuestions; } });
       } else {
         if (!lvlId) return alert('Create a level first, then select it here.');
         const level = appData.levels.find(l => l.id === lvlId);
-        if (level) level.lessons.push({ id: uid('les'), title, isCheckpoint, passThreshold: 85 });
+        if (level) level.lessons.push({ id: uid('les'), title, isCheckpoint, passThreshold: 85, shuffleQuestions });
       }
       resetLessonForm();
       saveIndex().then(renderAdminPanel);
@@ -932,6 +979,7 @@
       document.getElementById('edit-lesson-id').value = foundLes.id;
       document.getElementById('new-lesson-title').value = foundLes.title;
       document.getElementById('new-lesson-checkpoint').checked = !!foundLes.isCheckpoint;
+      document.getElementById('new-lesson-shuffle').checked = foundLes.shuffleQuestions !== false;
       document.getElementById('lesson-form-title').innerText = "Edit Lesson";
       document.getElementById('cancel-lesson-edit').style.display = 'inline-block';
     }
@@ -940,6 +988,7 @@
       document.getElementById('edit-lesson-id').value = '';
       document.getElementById('new-lesson-title').value = '';
       document.getElementById('new-lesson-checkpoint').checked = false;
+      document.getElementById('new-lesson-shuffle').checked = true;
       document.getElementById('lesson-form-title').innerText = "Create New Lesson";
       document.getElementById('cancel-lesson-edit').style.display = 'none';
     }
@@ -956,18 +1005,24 @@
     function onQuestionLessonChange() {
       document.getElementById('q-image-current').innerText = '';
       document.getElementById('q-audio-current').innerText = '';
+
+      const originalLesId = document.getElementById('edit-question-original-lesson').value;
+      const selectedLesId = document.getElementById('question-lesson-select').value;
+      const hint = document.getElementById('move-lesson-hint');
+      hint.style.display = (originalLesId && originalLesId !== selectedLesId) ? 'block' : 'none';
     }
 
     async function saveQuestion() {
       const qId = document.getElementById('edit-question-id').value;
-      const lesId = document.getElementById('question-lesson-select').value;
+      const originalLesId = document.getElementById('edit-question-original-lesson').value;
+      const targetLesId = document.getElementById('question-lesson-select').value;
       const symbol = document.getElementById('q-symbol').value.trim();
       const optionsRaw = document.getElementById('q-options').value;
       const correct = document.getElementById('q-correct').value.trim();
       const imgFile = document.getElementById('q-image-file').files[0];
       const audioFile = document.getElementById('q-audio-file').files[0];
 
-      if (!lesId) return alert('Create a lesson first, then select it here.');
+      if (!targetLesId) return alert('Create a lesson first, then select it here.');
       if (!optionsRaw || !correct) return alert('Please fill in options and correct answer fields.');
 
       const options = optionsRaw.split(',').map(s => s.trim()).filter(s => s !== '');
@@ -979,8 +1034,36 @@
       let imgBase64 = imgFile ? await compressImage(imgFile) : null;
       let audioBase64 = audioFile ? await toBase64(audioFile) : null;
 
-      const questions = await fetchLessonQuestions(lesId);
+      const isMove = qId && originalLesId && originalLesId !== targetLesId;
 
+      if (isMove) {
+        // Pull the existing question out of its original lesson...
+        const originalQuestions = await fetchLessonQuestions(originalLesId);
+        const existing = originalQuestions.find(item => item.id === qId);
+        if (!existing) return alert("Couldn't find the original question to move — it may have been deleted elsewhere. Refresh and try again.");
+
+        const updatedQuestion = {
+          ...existing, symbol, options, correct,
+          img: imgBase64 !== null ? imgBase64 : existing.img,
+          audio: audioBase64 !== null ? audioBase64 : existing.audio
+        };
+
+        const remainingInOriginal = originalQuestions.filter(item => item.id !== qId);
+        const targetQuestions = await fetchLessonQuestions(targetLesId);
+        targetQuestions.push(updatedQuestion);
+
+        // Save the destination first — if this fails (e.g. too large), we
+        // haven't touched the original lesson yet, so nothing is lost.
+        const savedTarget = await saveLessonQuestions(targetLesId, targetQuestions);
+        if (!savedTarget) return;
+        await saveLessonQuestions(originalLesId, remainingInOriginal);
+        resetQuestionForm();
+        renderAdminPanel();
+        return;
+      }
+
+      // Normal case: editing in place, or adding a brand new question.
+      const questions = await fetchLessonQuestions(targetLesId);
       if (qId) {
         const q = questions.find(item => item.id === qId);
         if (q) {
@@ -989,11 +1072,39 @@
           if (audioBase64 !== null) q.audio = audioBase64;
         }
       } else {
-        questions.push({ id: uid('q'), symbol, img: imgBase64 || '', audio: audioBase64 || '', options, correct });
+        questions.push({
+          id: uid('q'), symbol,
+          img: imgBase64 !== null ? imgBase64 : (copySourceMedia ? copySourceMedia.img : ''),
+          audio: audioBase64 !== null ? audioBase64 : (copySourceMedia ? copySourceMedia.audio : ''),
+          options, correct
+        });
+        copySourceMedia = null;
       }
 
-      const saved = await saveLessonQuestions(lesId, questions);
+      const saved = await saveLessonQuestions(targetLesId, questions);
       if (saved) { resetQuestionForm(); renderAdminPanel(); }
+    }
+
+    function copyQuestion(lesId, qId) {
+      const questions = lessonQuestionsCache[lesId] || [];
+      const foundQ = questions.find(item => item.id === qId);
+      if (!foundQ) return;
+
+      // Leave edit-question-id and original-lesson BLANK so Save treats
+      // this as a brand new question — that's what makes it a copy, not a move.
+      document.getElementById('question-lesson-select').value = lesId;
+      document.getElementById('edit-question-id').value = '';
+      document.getElementById('edit-question-original-lesson').value = '';
+      document.getElementById('q-symbol').value = foundQ.symbol;
+      document.getElementById('q-options').value = foundQ.options.join(', ');
+      document.getElementById('q-correct').value = foundQ.correct;
+      copySourceMedia = { img: foundQ.img || '', audio: foundQ.audio || '' };
+      document.getElementById('q-image-current').innerText = foundQ.img ? 'Copied image will carry over (upload a new file to replace it)' : '';
+      document.getElementById('q-audio-current').innerText = foundQ.audio ? 'Copied audio will carry over (upload a new file to replace it)' : '';
+      document.getElementById('move-lesson-hint').style.display = 'none';
+      document.getElementById('question-form-title').innerText = "Copying Question — pick destination lesson, then Save";
+      document.getElementById('cancel-question-edit').style.display = 'inline-block';
+      window.scrollTo({ top: document.getElementById('question-form-title').offsetTop - 20, behavior: 'smooth' });
     }
 
     function editQuestion(lesId, qId) {
@@ -1001,20 +1112,25 @@
       const foundQ = questions.find(item => item.id === qId);
       if (!foundQ) return;
 
+      copySourceMedia = null;
       document.getElementById('question-lesson-select').value = lesId;
       document.getElementById('edit-question-id').value = foundQ.id;
+      document.getElementById('edit-question-original-lesson').value = lesId;
       document.getElementById('q-symbol').value = foundQ.symbol;
       document.getElementById('q-options').value = foundQ.options.join(', ');
       document.getElementById('q-correct').value = foundQ.correct;
       document.getElementById('q-image-current').innerText = foundQ.img ? 'Current: image attached (upload a new file to replace it)' : '';
       document.getElementById('q-audio-current').innerText = foundQ.audio ? 'Current: audio attached (upload a new file to replace it)' : '';
+      document.getElementById('move-lesson-hint').style.display = 'none';
       document.getElementById('question-form-title').innerText = "Edit Question";
       document.getElementById('cancel-question-edit').style.display = 'inline-block';
       window.scrollTo({ top: document.getElementById('question-form-title').offsetTop - 20, behavior: 'smooth' });
     }
 
     function resetQuestionForm() {
+      copySourceMedia = null;
       document.getElementById('edit-question-id').value = '';
+      document.getElementById('edit-question-original-lesson').value = '';
       document.getElementById('q-symbol').value = '';
       document.getElementById('q-options').value = '';
       document.getElementById('q-correct').value = '';
@@ -1022,6 +1138,7 @@
       document.getElementById('q-audio-file').value = '';
       document.getElementById('q-image-current').innerText = '';
       document.getElementById('q-audio-current').innerText = '';
+      document.getElementById('move-lesson-hint').style.display = 'none';
       document.getElementById('question-form-title').innerText = "Add Question to Lesson";
       document.getElementById('cancel-question-edit').style.display = 'none';
     }
