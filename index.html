@@ -1241,6 +1241,7 @@
       if (!correct) return alert('Please fill in the correct/matching answer field.');
       let options = [];
       if (isMatchingLesson) {
+        if (!symbol) return alert('For a Matching Game, please fill in the Symbol field too — every pair needs both sides.');
         options = [correct]; // not used for gameplay, kept only so old quiz-shaped code doesn't choke
       } else {
         if (!optionsRaw) return alert('Please fill in options and correct answer fields.');
