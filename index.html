@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Letter Learner</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4CAF50">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     :root {
       --primary: #4CAF50;
@@ -1148,6 +1152,15 @@
       const questions = (lessonQuestionsCache[lesId] || []).filter(q => q.id !== qId);
       const saved = await saveLessonQuestions(lesId, questions);
       if (saved) renderAdminPanel();
+    }
+
+    // Registering this is what lets phones offer "Add to Home Screen" /
+    // "Install app" — it's what makes this feel like a real app instead of
+    // just a bookmarked webpage.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker registration failed:', err));
+      });
     }
   </script>
 </body>
