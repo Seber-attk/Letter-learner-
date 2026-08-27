@@ -64,6 +64,13 @@
     .option-btn.correct { background: #e8f5e9; border-color: var(--primary); color: #2e7d32; }
     .option-btn.wrong { background: #ffebee; border-color: var(--danger); color: #c62828; }
 
+    .match-grid { display: flex; gap: 16px; margin-top: 15px; }
+    .match-col { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .match-tile { padding: 14px 8px; border-radius: 12px; border: 3px solid #e0e0e0; background: #fff; font-weight: bold; font-size: 1.1rem; text-align: center; cursor: pointer; transition: 0.15s; word-break: break-word; }
+    .match-tile.selected { border-color: var(--secondary); background: #E3F2FD; }
+    .match-tile.matched { background: #e8f5e9; border-color: var(--primary); color: #2e7d32; opacity: 0.6; cursor: default; }
+    .match-tile.wrong-flash { background: #ffebee; border-color: var(--danger); }
+
     .completion-card { background: var(--card-bg); padding: 30px; border-radius: 20px; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
     .stat-box { display: flex; justify-content: space-around; margin: 25px 0; }
     .stat-item { background: #F5F5F5; padding: 15px; border-radius: 12px; width: 45%; }
@@ -172,6 +179,17 @@
         </div>
       </div>
 
+      <div id="matching-view" class="view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <button class="btn btn-outline" onclick="showView('student-home')">← ውጣ</button>
+          <span id="matching-status" style="font-weight:bold; color:#666;"></span>
+        </div>
+        <div class="quiz-card">
+          <h3>🧩 ጥንዶቹን ያዛምዱ</h3>
+          <div id="match-grid" class="match-grid"></div>
+        </div>
+      </div>
+
       <div id="completion-view" class="view">
         <div class="completion-card">
           <div id="completion-emoji" style="font-size:4rem;">🎉</div>
@@ -225,13 +243,22 @@
             <label>Lesson Title</label>
             <input type="text" id="new-lesson-title" placeholder="e.g. Letter A Sound">
           </div>
-          <div class="form-group checkbox">
-            <input type="checkbox" id="new-lesson-checkpoint">
-            <label style="margin:0;">This is a Checkpoint (requires 85% to pass and unlock the next level)</label>
+          <div class="form-group">
+            <label>Lesson Type</label>
+            <select id="new-lesson-type" onchange="onLessonTypeChange()">
+              <option value="quiz">Quiz (multiple choice)</option>
+              <option value="matching">🧩 Matching Game (pair letters with sounds)</option>
+            </select>
           </div>
-          <div class="form-group checkbox">
-            <input type="checkbox" id="new-lesson-shuffle" checked>
-            <label style="margin:0;">Shuffle question order each time (recommended for variety)</label>
+          <div id="checkpoint-shuffle-fields">
+            <div class="form-group checkbox">
+              <input type="checkbox" id="new-lesson-checkpoint">
+              <label style="margin:0;">This is a Checkpoint (requires 85% to pass and unlock the next level)</label>
+            </div>
+            <div class="form-group checkbox">
+              <input type="checkbox" id="new-lesson-shuffle" checked>
+              <label style="margin:0;">Shuffle question order each time (recommended for variety)</label>
+            </div>
           </div>
           <button class="btn" onclick="saveLesson()">Save Lesson</button>
           <button id="cancel-lesson-edit" class="btn btn-outline" style="display:none;" onclick="resetLessonForm()">Cancel Edit</button>
@@ -262,12 +289,13 @@
             <small id="q-audio-current" style="color:#666;"></small>
             <small style="color:#999; display:block; margin-top:4px;">Keep audio short (a word/sound, a few seconds) — long clips can't be auto-compressed.</small>
           </div>
-          <div class="form-group">
+          <div class="form-group" id="q-options-group">
             <label>Answer Choices (Comma separated)</label>
             <input type="text" id="q-options" placeholder="e.g. A, B, C, D">
+            <small id="q-options-hint" style="color:#999;"></small>
           </div>
           <div class="form-group">
-            <label>Exact Correct Answer</label>
+            <label id="q-correct-label">Exact Correct Answer</label>
             <input type="text" id="q-correct" placeholder="e.g. A">
           </div>
           <button class="btn" onclick="saveQuestion()">Save Question</button>
@@ -654,7 +682,7 @@
           }
 
           card.innerHTML = `
-            <div class="lesson-icon">${cleared ? '✅' : (!isUnlocked ? '🔒' : (lesson.isCheckpoint ? '🚩' : '⭐'))}</div>
+            <div class="lesson-icon">${cleared ? '✅' : (!isUnlocked ? '🔒' : (lesson.isCheckpoint ? '🚩' : (lesson.type === 'matching' ? '🧩' : '⭐')))}</div>
             <div style="font-weight:bold;">${lesson.title}</div>
             ${actionButtons}
           `;
@@ -664,6 +692,13 @@
           grid.appendChild(card);
           previousLessonCleared = cleared;
         });
+
+        if (level.lessons.length === 0 && level.videoUrl) {
+          const note = document.createElement('p');
+          note.style.cssText = 'color:#888; text-align:center; padding:10px 0;';
+          note.innerText = '🎥 ልዩ ቪዲዮ ደረጃ — ከላይ ያለውን ይመልከቱ';
+          container.appendChild(note);
+        }
 
         container.appendChild(grid);
       });
@@ -681,6 +716,12 @@
 
       const fetchedQuestions = await fetchLessonQuestions(lessonId);
       if (!fetchedQuestions || fetchedQuestions.length === 0) { alert("ይህ ትምህርት እስካሁን ጥያቄዎች የሉትም!"); return; }
+
+      if (lessonMeta.type === 'matching') {
+        startMatchingGame(lessonMeta, fetchedQuestions);
+        return;
+      }
+
       const questions = lessonMeta.shuffleQuestions !== false ? shuffleArray(fetchedQuestions) : fetchedQuestions.slice();
 
       currentLesson = { ...lessonMeta, questions };
@@ -692,6 +733,10 @@
 
     function retryLesson() {
       if (!currentLesson) { showView('student-home'); return; }
+      if (currentLesson.isMatchingRetry) {
+        startMatchingGame(currentLesson, currentLesson._allQuestions);
+        return;
+      }
       if (currentLesson.shuffleQuestions !== false) currentLesson.questions = shuffleArray(currentLesson.questions);
       currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
       showView('quiz-view');
@@ -702,6 +747,131 @@
       const a = arr.slice();
       for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
       return a;
+    }
+
+    // --- MATCHING GAME ---
+    let matchState = null; // { lessonMeta, pairs, matchedCount, mistakes, selectedLeft, selectedRight, xpEarned }
+
+    function startMatchingGame(lessonMeta, allQuestions) {
+      const MAX_PAIRS = 8;
+      const usable = allQuestions.filter(q => q.symbol && q.correct);
+      if (usable.length < 2) { alert('ይህ ጨዋታ ለመጫወት በቂ ጥንዶች የሉትም (ቢያንስ 2 ያስፈልጋሉ)።'); return; }
+
+      const chosen = shuffleArray(usable).slice(0, Math.min(MAX_PAIRS, usable.length));
+      const pairs = chosen.map((q, i) => ({ pairId: q.id || ('p' + i), left: q.symbol, right: q.correct }));
+
+      matchState = {
+        lessonMeta, pairs,
+        leftOrder: shuffleArray(pairs.map(p => p.pairId)),
+        rightOrder: shuffleArray(pairs.map(p => p.pairId)),
+        matchedIds: new Set(),
+        selectedLeft: null, selectedRight: null,
+        mistakes: 0
+      };
+
+      showView('matching-view');
+      renderMatchingGame();
+    }
+
+    function renderMatchingGame() {
+      const grid = document.getElementById('match-grid');
+      grid.innerHTML = '';
+      const leftCol = document.createElement('div');
+      leftCol.className = 'match-col';
+      const rightCol = document.createElement('div');
+      rightCol.className = 'match-col';
+
+      matchState.leftOrder.forEach(pairId => {
+        const pair = matchState.pairs.find(p => p.pairId === pairId);
+        const tile = document.createElement('div');
+        const isMatched = matchState.matchedIds.has(pairId);
+        tile.className = 'match-tile' + (isMatched ? ' matched' : (matchState.selectedLeft === pairId ? ' selected' : ''));
+        tile.innerText = pair.left;
+        if (!isMatched) tile.onclick = () => onMatchTileClick('left', pairId);
+        leftCol.appendChild(tile);
+      });
+
+      matchState.rightOrder.forEach(pairId => {
+        const pair = matchState.pairs.find(p => p.pairId === pairId);
+        const tile = document.createElement('div');
+        const isMatched = matchState.matchedIds.has(pairId);
+        tile.className = 'match-tile' + (isMatched ? ' matched' : (matchState.selectedRight === pairId ? ' selected' : ''));
+        tile.innerText = pair.right;
+        if (!isMatched) tile.onclick = () => onMatchTileClick('right', pairId);
+        rightCol.appendChild(tile);
+      });
+
+      grid.appendChild(leftCol);
+      grid.appendChild(rightCol);
+
+      document.getElementById('matching-status').innerText = `${matchState.matchedIds.size}/${matchState.pairs.length}`;
+    }
+
+    function onMatchTileClick(side, pairId) {
+      if (side === 'left') matchState.selectedLeft = (matchState.selectedLeft === pairId) ? null : pairId;
+      else matchState.selectedRight = (matchState.selectedRight === pairId) ? null : pairId;
+
+      renderMatchingGame();
+
+      if (matchState.selectedLeft && matchState.selectedRight) {
+        const isMatch = matchState.selectedLeft === matchState.selectedRight;
+        if (isMatch) {
+          matchState.matchedIds.add(matchState.selectedLeft);
+          playCorrectSound();
+          matchState.selectedLeft = null;
+          matchState.selectedRight = null;
+          renderMatchingGame();
+          if (matchState.matchedIds.size === matchState.pairs.length) {
+            finishMatchingGame();
+          }
+        } else {
+          matchState.mistakes++;
+          playWrongSound();
+          // Brief red flash, then clear the selection.
+          const leftId = matchState.selectedLeft, rightId = matchState.selectedRight;
+          document.querySelectorAll('.match-tile.selected').forEach(el => el.classList.add('wrong-flash'));
+          setTimeout(() => {
+            matchState.selectedLeft = null;
+            matchState.selectedRight = null;
+            renderMatchingGame();
+          }, 500);
+        }
+      }
+    }
+
+    async function finishMatchingGame() {
+      const totalPairs = matchState.pairs.length;
+      const pct = Math.round((totalPairs / (totalPairs + matchState.mistakes)) * 100);
+      const xpEarned = totalPairs * 10 + 15;
+
+      const prevXP = userProgress.xp;
+      const prevCompleted = userProgress.completedLessons.slice();
+      userProgress.xp += xpEarned;
+      if (!userProgress.completedLessons.includes(matchState.lessonMeta.id)) {
+        userProgress.completedLessons.push(matchState.lessonMeta.id);
+      }
+
+      const ok = await saveUserProgress();
+      if (!ok) {
+        userProgress.xp = prevXP;
+        userProgress.completedLessons = prevCompleted;
+        alert("እድገትዎን ማስቀመጥ አልተቻለም — እባክዎ የኢንተርኔት ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።");
+        showView('student-home');
+        return;
+      }
+
+      document.getElementById('summary-score').innerText = `${pct}%`;
+      document.getElementById('summary-xp').innerText = `+${xpEarned} XP`;
+      document.getElementById('completion-emoji').innerText = '🧩';
+      document.getElementById('completion-title').innerText = 'ትምህርቱ ተጠናቋል!';
+      document.getElementById('completion-subtext').innerText = '';
+      document.getElementById('retry-btn').style.display = matchState.mistakes > 0 ? 'block' : 'none';
+
+      // retryLesson() expects currentLesson to be a quiz-style object; give
+      // the retry button a matching-aware path instead.
+      currentLesson = { ...matchState.lessonMeta, isMatchingRetry: true, _allQuestions: matchState.pairs.map(p => ({ id: p.pairId, symbol: p.left, correct: p.right })) };
+
+      showView('completion-view');
     }
 
     function renderQuestion() {
@@ -846,7 +1016,7 @@
       const lesSelect = document.getElementById('question-lesson-select');
       let lessonOptions = '';
       appData.levels.forEach(l => l.lessons.forEach(les => {
-        lessonOptions += `<option value="${les.id}">${l.name} → ${les.title}${les.isCheckpoint ? ' (Checkpoint)' : ''}</option>`;
+        lessonOptions += `<option value="${les.id}">${l.name} → ${les.title}${les.isCheckpoint ? ' (Checkpoint)' : ''}${les.type === 'matching' ? ' (Matching)' : ''}</option>`;
       }));
       lesSelect.innerHTML = lessonOptions || '<option value="">-- Create a lesson first --</option>';
 
@@ -860,8 +1030,12 @@
       await fetchAllLessonDocsForAdmin();
 
       let out = '';
-      appData.levels.forEach(l => {
+      appData.levels.forEach((l, idx) => {
+        const isFirst = idx === 0;
+        const isLast = idx === appData.levels.length - 1;
         out += `<details><summary><span>📂 ${l.name}</span><div>
+          <button class="btn btn-sm btn-outline" ${isFirst ? 'disabled' : ''} onclick="event.preventDefault(); moveLevel('${l.id}', -1)">▲</button>
+          <button class="btn btn-sm btn-outline" ${isLast ? 'disabled' : ''} onclick="event.preventDefault(); moveLevel('${l.id}', 1)">▼</button>
           <button class="btn btn-sm btn-warning" onclick="editLevel('${l.id}')">Edit</button>
           <button class="btn btn-sm btn-danger" onclick="deleteLevel('${l.id}')">Delete</button>
         </div></summary><div style="padding-left:15px; margin-top:10px;">`;
@@ -870,7 +1044,7 @@
 
         l.lessons.forEach(les => {
           const qs = lessonQuestionsCache[les.id] || [];
-          out += `<details><summary><span>${les.isCheckpoint ? '🚩' : '📖'} ${les.title} (${qs.length} Qs)${les.isCheckpoint ? ' — Checkpoint' : ''}</span><div>
+          out += `<details><summary><span>${les.isCheckpoint ? '🚩' : (les.type === 'matching' ? '🧩' : '📖')} ${les.title} (${qs.length} Qs)${les.isCheckpoint ? ' — Checkpoint' : ''}${les.type === 'matching' ? ' — Matching Game' : ''}</span><div>
             <button class="btn btn-sm btn-warning" onclick="editLesson('${les.id}')">Edit</button>
             <button class="btn btn-sm btn-danger" onclick="deleteLesson('${les.id}')">Delete</button>
           </div></summary><div style="padding-left:10px; margin-top:5px;">`;
@@ -948,6 +1122,16 @@
       showView('video-view');
     }
 
+    function moveLevel(id, direction) {
+      const idx = appData.levels.findIndex(l => l.id === id);
+      const targetIdx = idx + direction;
+      if (idx === -1 || targetIdx < 0 || targetIdx >= appData.levels.length) return;
+      const temp = appData.levels[idx];
+      appData.levels[idx] = appData.levels[targetIdx];
+      appData.levels[targetIdx] = temp;
+      saveIndex().then(renderAdminPanel);
+    }
+
     async function deleteLevel(id) {
       if (!confirm('Delete this level and all its lessons?')) return;
       const lvl = appData.levels.find(l => l.id === id);
@@ -957,20 +1141,29 @@
       renderAdminPanel();
     }
 
+    function onLessonTypeChange() {
+      const isMatching = document.getElementById('new-lesson-type').value === 'matching';
+      document.getElementById('checkpoint-shuffle-fields').style.display = isMatching ? 'none' : 'block';
+      if (isMatching) {
+        document.getElementById('new-lesson-checkpoint').checked = false;
+      }
+    }
+
     function saveLesson() {
       const id = document.getElementById('edit-lesson-id').value;
       const lvlId = document.getElementById('lesson-level-select').value;
       const title = document.getElementById('new-lesson-title').value.trim();
-      const isCheckpoint = document.getElementById('new-lesson-checkpoint').checked;
+      const type = document.getElementById('new-lesson-type').value;
+      const isCheckpoint = type === 'matching' ? false : document.getElementById('new-lesson-checkpoint').checked;
       const shuffleQuestions = document.getElementById('new-lesson-shuffle').checked;
       if (!title) return alert('Enter lesson title');
 
       if (id) {
-        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) { les.title = title; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; les.shuffleQuestions = shuffleQuestions; } });
+        appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === id); if (les) { les.title = title; les.type = type; les.isCheckpoint = isCheckpoint; les.passThreshold = 85; les.shuffleQuestions = shuffleQuestions; } });
       } else {
         if (!lvlId) return alert('Create a level first, then select it here.');
         const level = appData.levels.find(l => l.id === lvlId);
-        if (level) level.lessons.push({ id: uid('les'), title, isCheckpoint, passThreshold: 85, shuffleQuestions });
+        if (level) level.lessons.push({ id: uid('les'), title, type, isCheckpoint, passThreshold: 85, shuffleQuestions });
       }
       resetLessonForm();
       saveIndex().then(renderAdminPanel);
@@ -982,8 +1175,10 @@
       if (!foundLes) return;
       document.getElementById('edit-lesson-id').value = foundLes.id;
       document.getElementById('new-lesson-title').value = foundLes.title;
+      document.getElementById('new-lesson-type').value = foundLes.type === 'matching' ? 'matching' : 'quiz';
       document.getElementById('new-lesson-checkpoint').checked = !!foundLes.isCheckpoint;
       document.getElementById('new-lesson-shuffle').checked = foundLes.shuffleQuestions !== false;
+      onLessonTypeChange();
       document.getElementById('lesson-form-title').innerText = "Edit Lesson";
       document.getElementById('cancel-lesson-edit').style.display = 'inline-block';
     }
@@ -991,8 +1186,10 @@
     function resetLessonForm() {
       document.getElementById('edit-lesson-id').value = '';
       document.getElementById('new-lesson-title').value = '';
+      document.getElementById('new-lesson-type').value = 'quiz';
       document.getElementById('new-lesson-checkpoint').checked = false;
       document.getElementById('new-lesson-shuffle').checked = true;
+      onLessonTypeChange();
       document.getElementById('lesson-form-title').innerText = "Create New Lesson";
       document.getElementById('cancel-lesson-edit').style.display = 'none';
     }
@@ -1006,6 +1203,12 @@
       renderAdminPanel();
     }
 
+    function findLessonMeta(lessonId) {
+      let found = null;
+      appData.levels.forEach(l => { const les = l.lessons.find(s => s.id === lessonId); if (les) found = les; });
+      return found;
+    }
+
     function onQuestionLessonChange() {
       document.getElementById('q-image-current').innerText = '';
       document.getElementById('q-audio-current').innerText = '';
@@ -1014,6 +1217,11 @@
       const selectedLesId = document.getElementById('question-lesson-select').value;
       const hint = document.getElementById('move-lesson-hint');
       hint.style.display = (originalLesId && originalLesId !== selectedLesId) ? 'block' : 'none';
+
+      const meta = findLessonMeta(selectedLesId);
+      const isMatching = meta && meta.type === 'matching';
+      document.getElementById('q-options-group').style.display = isMatching ? 'none' : 'block';
+      document.getElementById('q-correct-label').innerText = isMatching ? 'Matching Answer (the sound/word to pair with the symbol)' : 'Exact Correct Answer';
     }
 
     async function saveQuestion() {
@@ -1027,12 +1235,20 @@
       const audioFile = document.getElementById('q-audio-file').files[0];
 
       if (!targetLesId) return alert('Create a lesson first, then select it here.');
-      if (!optionsRaw || !correct) return alert('Please fill in options and correct answer fields.');
+      const targetMeta = findLessonMeta(targetLesId);
+      const isMatchingLesson = targetMeta && targetMeta.type === 'matching';
 
-      const options = optionsRaw.split(',').map(s => s.trim()).filter(s => s !== '');
-      if (options.length < 2) return alert('Please provide at least 2 answer choices.');
-      if (!options.some(o => o.toLowerCase() === correct.toLowerCase())) {
-        return alert(`The correct answer ("${correct}") must exactly match one of the answer choices: ${options.join(', ')}`);
+      if (!correct) return alert('Please fill in the correct/matching answer field.');
+      let options = [];
+      if (isMatchingLesson) {
+        options = [correct]; // not used for gameplay, kept only so old quiz-shaped code doesn't choke
+      } else {
+        if (!optionsRaw) return alert('Please fill in options and correct answer fields.');
+        options = optionsRaw.split(',').map(s => s.trim()).filter(s => s !== '');
+        if (options.length < 2) return alert('Please provide at least 2 answer choices.');
+        if (!options.some(o => o.toLowerCase() === correct.toLowerCase())) {
+          return alert(`The correct answer ("${correct}") must exactly match one of the answer choices: ${options.join(', ')}`);
+        }
       }
 
       let imgBase64 = imgFile ? await compressImage(imgFile) : null;
@@ -1055,6 +1271,7 @@
         const remainingInOriginal = originalQuestions.filter(item => item.id !== qId);
         const targetQuestions = await fetchLessonQuestions(targetLesId);
         targetQuestions.push(updatedQuestion);
+
 
         // Save the destination first — if this fails (e.g. too large), we
         // haven't touched the original lesson yet, so nothing is lost.
