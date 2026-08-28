@@ -8,6 +8,7 @@
   <meta name="theme-color" content="#4CAF50">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
       --primary: #4CAF50;
@@ -97,6 +98,11 @@
     .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 16px; overflow: hidden; background: #000; }
     .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
     .level-video-btn { background: none; border: none; color: var(--secondary); font-weight: bold; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; }
+    .live-class-card { background: linear-gradient(135deg, #2E7D32, #4CAF50); color: white; padding: 24px; border-radius: 20px; text-align: center; margin-top: 25px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+    .live-class-card h3 { margin: 8px 0; font-size: 1.3rem; }
+    .live-class-card p { margin: 6px 0 18px 0; opacity: 0.9; }
+    .live-class-card .btn { background: white; color: #2E7D32; }
+    .live-class-card .btn:hover { background: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -303,6 +309,25 @@
         </div>
 
         <div class="admin-card">
+          <h3>Live Quran Class (unlocks after ALL levels are completed)</h3>
+          <div class="form-group">
+            <label>Schedule (shown to students as free text)</label>
+            <input type="text" id="live-class-schedule" placeholder="e.g. Every Saturday, 4:00 PM">
+          </div>
+          <div class="form-group">
+            <label>Google Meet Link</label>
+            <input type="text" id="live-class-link" placeholder="e.g. https://meet.google.com/xxx-xxxx-xxx">
+          </div>
+          <button class="btn" onclick="saveLiveClassInfo()">Save Live Class Info</button>
+        </div>
+
+        <div class="admin-card">
+          <h3>🎓 Students Who Finished Everything</h3>
+          <button class="btn btn-sm btn-outline" onclick="renderCompletedStudents()">↻ Refresh List</button>
+          <div id="completed-students-list" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="admin-card">
           <h3>Content Structure & Management</h3>
           <button class="btn btn-sm btn-outline" style="margin-bottom:10px;" onclick="renderAdminPanel()">↻ Refresh</button>
           <button class="btn btn-sm btn-secondary" style="margin-bottom:10px; margin-left:8px;" onclick="exportAllContent()">⬇ Export Backup (JSON)</button>
@@ -373,7 +398,7 @@
     let isAdmin = false;
     let appData = { levels: [] };                 // structure only
     let lessonQuestionsCache = {};                 // lessonId -> questions[]
-    let userProgress = { xp: 0, completedLessons: [], checkpointScores: {} };
+    let userProgress = { xp: 0, completedLessons: [], checkpointScores: {}, adminNotified: false, allCompletedAt: null };
 
     let currentLesson = null;
     let copySourceMedia = null; // { img, audio } carried over when duplicating a question
@@ -387,6 +412,50 @@
     let unsubUser = null;
 
     const MAX_DOC_BYTES = 900 * 1024; // stay safely under Firestore's 1MB doc limit
+
+    // ---- EMAIL NOTIFICATIONS (EmailJS) ----
+    // Fill these in after creating a free account at emailjs.com and connecting
+    // your Gmail (see setup steps). These three values are safe to have visible
+    // in the code — they identify your account, they aren't secret passwords.
+    const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+    const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";
+    const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID";
+    const ADMIN_NOTIFY_EMAIL = "mohammedseidmusteffa@gmail.com";
+
+    if (window.emailjs && EMAILJS_PUBLIC_KEY !== "YOUR_PUBLIC_KEY") {
+      emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+    }
+
+    function sendCompletionEmail(studentEmail, studentName) {
+      if (!window.emailjs || EMAILJS_PUBLIC_KEY === "YOUR_PUBLIC_KEY") {
+        console.warn('EmailJS not configured yet — skipping completion email.');
+        return;
+      }
+      emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: ADMIN_NOTIFY_EMAIL,
+        student_name: studentName || studentEmail,
+        student_email: studentEmail
+      }).catch(err => console.warn('Completion email failed to send:', err));
+    }
+
+    function getTotalLessonCount() {
+      let total = 0;
+      appData.levels.forEach(l => { total += l.lessons.length; });
+      return total;
+    }
+
+    // Fires the completion email exactly once per student — guarded by the
+    // adminNotified flag saved on their own progress doc.
+    async function checkAndNotifyAllCleared() {
+      const total = getTotalLessonCount();
+      if (total === 0) return;
+      if (userProgress.completedLessons.length >= total && !userProgress.adminNotified) {
+        userProgress.adminNotified = true;
+        userProgress.allCompletedAt = new Date().toISOString();
+        await saveUserProgress();
+        sendCompletionEmail(currentUser.email, currentUser.displayName || currentUser.email);
+      }
+    }
 
     window.addEventListener('fb-ready', () => {
       fb = window.__fb;
@@ -483,7 +552,10 @@
       unsubUser = fb.onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const d = snap.data();
-        userProgress = { xp: d.xp || 0, completedLessons: d.completedLessons || [], checkpointScores: d.checkpointScores || {} };
+        userProgress = {
+          xp: d.xp || 0, completedLessons: d.completedLessons || [], checkpointScores: d.checkpointScores || {},
+          adminNotified: d.adminNotified || false, allCompletedAt: d.allCompletedAt || null
+        };
         document.getElementById('total-xp').innerText = userProgress.xp;
         if (document.getElementById('student-home').classList.contains('active')) renderStudentHome();
       });
@@ -511,6 +583,40 @@
       } catch (e) {
         console.error('Failed to save structure:', e);
         alert("Couldn't save changes. Check your internet connection and try again.");
+      }
+    }
+
+    function saveLiveClassInfo() {
+      const schedule = document.getElementById('live-class-schedule').value.trim();
+      const meetLink = document.getElementById('live-class-link').value.trim();
+      appData.liveClass = { schedule, meetLink };
+      saveIndex();
+      alert('Saved!');
+    }
+
+    async function renderCompletedStudents() {
+      const container = document.getElementById('completed-students-list');
+      container.innerHTML = '<p style="color:#999; font-size:0.85rem;">Loading…</p>';
+      try {
+        const snap = await fb.getDocs(fb.collection(fb.db, 'users'));
+        const finished = [];
+        snap.forEach(d => {
+          const data = d.data();
+          if (data.adminNotified) finished.push(data);
+        });
+        finished.sort((a, b) => new Date(b.allCompletedAt || 0) - new Date(a.allCompletedAt || 0));
+
+        if (finished.length === 0) {
+          container.innerHTML = '<p style="color:#999; font-size:0.9rem;">No one has finished everything yet.</p>';
+          return;
+        }
+        container.innerHTML = finished.map(s => {
+          const dateStr = s.allCompletedAt ? new Date(s.allCompletedAt).toLocaleString() : '';
+          return `<div class="q-admin-item"><span>${s.email}</span><span style="color:#888; font-size:0.8rem;">${dateStr}</span></div>`;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to load completed students:', e);
+        container.innerHTML = '<p style="color:#c62828; font-size:0.9rem;">Could not load the list — check the security rules are updated to let admin read the users collection.</p>';
       }
     }
 
@@ -583,7 +689,8 @@
       try {
         await fb.setDoc(fb.doc(fb.db, 'users', currentUser.uid), {
           email: currentUser.email, xp: userProgress.xp,
-          completedLessons: userProgress.completedLessons, checkpointScores: userProgress.checkpointScores
+          completedLessons: userProgress.completedLessons, checkpointScores: userProgress.checkpointScores,
+          adminNotified: userProgress.adminNotified, allCompletedAt: userProgress.allCompletedAt
         });
         return true;
       } catch (e) {
@@ -706,6 +813,19 @@
       const progressPct = totalLessons > 0 ? (clearedCount / totalLessons) * 100 : 0;
       document.getElementById('overall-progress').style.width = `${progressPct}%`;
       document.getElementById('progress-text').innerText = `${clearedCount} / ${totalLessons} ትምህርቶች ተጠናቅቀዋል`;
+
+      const allCleared = totalLessons > 0 && clearedCount === totalLessons;
+      if (allCleared && appData.liveClass && appData.liveClass.meetLink) {
+        const card = document.createElement('div');
+        card.className = 'live-class-card';
+        card.innerHTML = `
+          <div style="font-size:2.5rem;">🕌</div>
+          <h3>የቁርኣን ቀጥታ ትምህርት ተከፍቷል!</h3>
+          <p>${appData.liveClass.schedule ? appData.liveClass.schedule : ''}</p>
+          <button class="btn" onclick="window.open('${appData.liveClass.meetLink}', '_blank')">ክፍል ይቀላቀሉ</button>
+        `;
+        container.appendChild(card);
+      }
     }
 
     // --- QUIZ & XP LOGIC ---
@@ -859,6 +979,7 @@
         showView('student-home');
         return;
       }
+      checkAndNotifyAllCleared();
 
       document.getElementById('summary-score').innerText = `${pct}%`;
       document.getElementById('summary-xp').innerText = `+${xpEarned} XP`;
@@ -979,6 +1100,7 @@
         showView('student-home');
         return;
       }
+      checkAndNotifyAllCleared();
 
       document.getElementById('summary-score').innerText = `${pct}%`;
       document.getElementById('summary-xp').innerText = `+${lessonXPEarned} XP`;
@@ -1007,6 +1129,12 @@
     // --- ADMIN PANEL ---
     async function renderAdminPanel() {
       if (!isAdmin) return;
+
+      if (appData.liveClass) {
+        document.getElementById('live-class-schedule').value = appData.liveClass.schedule || '';
+        document.getElementById('live-class-link').value = appData.liveClass.meetLink || '';
+      }
+      renderCompletedStudents();
 
       const lvlSelect = document.getElementById('lesson-level-select');
       lvlSelect.innerHTML = appData.levels.length === 0
