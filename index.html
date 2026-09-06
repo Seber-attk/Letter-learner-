@@ -842,7 +842,7 @@
         return;
       }
 
-      const questions = lessonMeta.shuffleQuestions !== false ? shuffleArray(fetchedQuestions) : fetchedQuestions.slice();
+      const questions = lessonMeta.shuffleQuestions !== false ? shuffleQuestionsSpreadingAnswers(fetchedQuestions) : fetchedQuestions.slice();
 
       currentLesson = { ...lessonMeta, questions };
       currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
@@ -857,7 +857,7 @@
         startMatchingGame(currentLesson, currentLesson._allQuestions);
         return;
       }
-      if (currentLesson.shuffleQuestions !== false) currentLesson.questions = shuffleArray(currentLesson.questions);
+      if (currentLesson.shuffleQuestions !== false) currentLesson.questions = shuffleQuestionsSpreadingAnswers(currentLesson.questions);
       currentQuestionIdx = 0; lessonScore = 0; lessonXPEarned = 0;
       showView('quiz-view');
       renderQuestion();
@@ -867,6 +867,38 @@
       const a = arr.slice();
       for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
       return a;
+    }
+
+    // Like shuffleArray, but avoids placing two questions with the same
+    // correct answer back-to-back wherever mathematically possible — so
+    // "A, A, A" in a row doesn't accidentally happen from pure randomness.
+    function shuffleQuestionsSpreadingAnswers(questions) {
+      const buckets = {};
+      questions.forEach(q => {
+        const key = (q.correct || '').trim().toLowerCase();
+        if (!buckets[key]) buckets[key] = [];
+        buckets[key].push(q);
+      });
+      Object.keys(buckets).forEach(k => { buckets[k] = shuffleArray(buckets[k]); });
+
+      const result = [];
+      let lastKey = null;
+      let remainingKeys = Object.keys(buckets).filter(k => buckets[k].length > 0);
+
+      while (remainingKeys.length > 0) {
+        let candidates = remainingKeys.filter(k => k !== lastKey);
+        if (candidates.length === 0) candidates = remainingKeys; // forced repeat — unavoidable (one answer dominates the set)
+
+        candidates.sort((a, b) => buckets[b].length - buckets[a].length);
+        const topCount = buckets[candidates[0]].length;
+        const topTies = candidates.filter(k => buckets[k].length === topCount);
+        const chosenKey = topTies[Math.floor(Math.random() * topTies.length)];
+
+        result.push(buckets[chosenKey].pop());
+        lastKey = chosenKey;
+        remainingKeys = Object.keys(buckets).filter(k => buckets[k].length > 0);
+      }
+      return result;
     }
 
     // --- MATCHING GAME ---
