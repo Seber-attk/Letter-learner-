@@ -646,6 +646,8 @@
           alert('ክፍለ ትምህርቱ ተጠናቅቋል።');
           showView('student-home');
         }
+      }, (err) => {
+        alert('Live session check failed: ' + (err && err.message ? err.message : err));
       });
     }
 
@@ -654,10 +656,14 @@
     }
 
     async function teacherStartSession(studentUid, studentEmail) {
-      await fb.setDoc(fb.doc(fb.db, 'liveSessions', studentUid), {
-        active: true, teacherEmail: currentUser.email, studentEmail, page: 1, marks: {}, startedAt: Date.now()
-      });
-      openLiveQuranView(studentUid, true, studentEmail);
+      try {
+        await fb.setDoc(fb.doc(fb.db, 'liveSessions', studentUid), {
+          active: true, teacherEmail: currentUser.email, studentEmail, page: 1, marks: {}, startedAt: Date.now()
+        });
+        openLiveQuranView(studentUid, true, studentEmail);
+      } catch (e) {
+        alert('Could not start session: ' + (e && e.message ? e.message : e));
+      }
     }
 
     function openLiveQuranView(studentUid, isTeacher, studentEmail) {
@@ -679,6 +685,8 @@
         } catch (e) {
           document.getElementById('quran-page-container').innerHTML = '<p style="color:#c00;">ገጹን መጫን አልተቻለም — ኢንተርኔት ያረጋግጡ።</p>';
         }
+      }, (err) => {
+        alert('Live session sync failed: ' + (err && err.message ? err.message : err));
       });
     }
 
