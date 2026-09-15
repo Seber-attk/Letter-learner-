@@ -293,6 +293,8 @@
             <label>Optional Audio Upload</label>
             <input type="file" id="q-audio-file" accept="audio/*">
             <small id="q-audio-current" style="color:#666;"></small>
+            <input type="hidden" id="q-audio-removed" value="">
+            <button type="button" id="q-audio-remove-btn" class="btn btn-sm btn-outline" style="display:none; margin-top:6px;" onclick="removeQuestionAudio()">🗑 Remove audio</button>
             <small style="color:#999; display:block; margin-top:4px;">Keep audio short (a word/sound, a few seconds) — long clips can't be auto-compressed.</small>
           </div>
           <div class="form-group" id="q-options-group">
@@ -1393,6 +1395,7 @@
       const correct = document.getElementById('q-correct').value.trim();
       const imgFile = document.getElementById('q-image-file').files[0];
       const audioFile = document.getElementById('q-audio-file').files[0];
+      const audioRemoved = document.getElementById('q-audio-removed').value === '1';
 
       if (!targetLesId) return alert('Create a lesson first, then select it here.');
       const targetMeta = findLessonMeta(targetLesId);
@@ -1413,7 +1416,8 @@
       }
 
       let imgBase64 = imgFile ? await compressImage(imgFile) : null;
-      let audioBase64 = audioFile ? await toBase64(audioFile) : null;
+      // null = leave audio untouched (keep existing/copied), '' = explicitly cleared via Remove button, string = new upload
+      let audioBase64 = audioFile ? await toBase64(audioFile) : (audioRemoved ? '' : null);
 
       const isMove = qId && originalLesId && originalLesId !== targetLesId;
 
@@ -1467,6 +1471,14 @@
       if (saved) { resetQuestionForm(); renderAdminPanel(); }
     }
 
+    function removeQuestionAudio() {
+      document.getElementById('q-audio-removed').value = '1';
+      document.getElementById('q-audio-file').value = '';
+      document.getElementById('q-audio-current').innerText = 'Audio will be removed when you save.';
+      document.getElementById('q-audio-remove-btn').style.display = 'none';
+      if (copySourceMedia) copySourceMedia = { ...copySourceMedia, audio: '' };
+    }
+
     function copyQuestion(lesId, qId) {
       const questions = lessonQuestionsCache[lesId] || [];
       const foundQ = questions.find(item => item.id === qId);
@@ -1481,8 +1493,10 @@
       document.getElementById('q-options').value = foundQ.options.join(', ');
       document.getElementById('q-correct').value = foundQ.correct;
       copySourceMedia = { img: foundQ.img || '', audio: foundQ.audio || '' };
+      document.getElementById('q-audio-removed').value = '';
       document.getElementById('q-image-current').innerText = foundQ.img ? 'Copied image will carry over (upload a new file to replace it)' : '';
       document.getElementById('q-audio-current').innerText = foundQ.audio ? 'Copied audio will carry over (upload a new file to replace it)' : '';
+      document.getElementById('q-audio-remove-btn').style.display = foundQ.audio ? 'inline-block' : 'none';
       document.getElementById('move-lesson-hint').style.display = 'none';
       document.getElementById('question-form-title').innerText = "Copying Question — pick destination lesson, then Save";
       document.getElementById('cancel-question-edit').style.display = 'inline-block';
@@ -1501,8 +1515,10 @@
       document.getElementById('q-symbol').value = foundQ.symbol;
       document.getElementById('q-options').value = foundQ.options.join(', ');
       document.getElementById('q-correct').value = foundQ.correct;
+      document.getElementById('q-audio-removed').value = '';
       document.getElementById('q-image-current').innerText = foundQ.img ? 'Current: image attached (upload a new file to replace it)' : '';
       document.getElementById('q-audio-current').innerText = foundQ.audio ? 'Current: audio attached (upload a new file to replace it)' : '';
+      document.getElementById('q-audio-remove-btn').style.display = foundQ.audio ? 'inline-block' : 'none';
       document.getElementById('move-lesson-hint').style.display = 'none';
       document.getElementById('question-form-title').innerText = "Edit Question";
       document.getElementById('cancel-question-edit').style.display = 'inline-block';
@@ -1520,6 +1536,8 @@
       document.getElementById('q-audio-file').value = '';
       document.getElementById('q-image-current').innerText = '';
       document.getElementById('q-audio-current').innerText = '';
+      document.getElementById('q-audio-removed').value = '';
+      document.getElementById('q-audio-remove-btn').style.display = 'none';
       document.getElementById('move-lesson-hint').style.display = 'none';
       document.getElementById('question-form-title').innerText = "Add Question to Lesson";
       document.getElementById('cancel-question-edit').style.display = 'none';
