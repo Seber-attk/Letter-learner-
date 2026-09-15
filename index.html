@@ -103,6 +103,22 @@
     .live-class-card p { margin: 6px 0 18px 0; opacity: 0.9; }
     .live-class-card .btn { background: white; color: #2E7D32; }
     .live-class-card .btn:hover { background: #f0f0f0; }
+    .live-session-banner { background: linear-gradient(135deg, #C62828, #E53935); color: white; padding: 18px; border-radius: 16px; text-align: center; margin-bottom: 20px; cursor: pointer; animation: pulseBanner 1.6s infinite; }
+    @keyframes pulseBanner { 0%,100% { box-shadow: 0 0 0 0 rgba(229,57,53,0.5); } 50% { box-shadow: 0 0 0 10px rgba(229,57,53,0); } }
+    .live-session-banner .btn { background: white; color: #C62828; margin-top: 8px; }
+    .quran-page-nav { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+    .quran-page { background:#fffdf5; border:1px solid #e8dfc0; border-radius:14px; padding:22px 18px; direction:rtl; text-align:right; font-family:'Amiri','Traditional Arabic',serif; font-size:1.7rem; line-height:2.6; }
+    .quran-word { display:inline-block; padding:2px 3px; border-radius:6px; cursor:pointer; }
+    .quran-word.point { background:#BBDEFB; }
+    .quran-word.mistake { background:#FFCDD2; }
+    .quran-word.good { background:#C8E6C9; }
+    .quran-ayah-end { color:var(--secondary); font-size:1.1rem; margin:0 4px; }
+    .quran-mark-legend { display:flex; gap:14px; flex-wrap:wrap; margin:12px 0; font-size:0.85rem; color:#666; }
+    .quran-mark-legend span { display:inline-flex; align-items:center; gap:5px; }
+    .quran-mark-dot { width:12px; height:12px; border-radius:3px; display:inline-block; }
+    #quran-audio-container { margin-top:16px; border-radius:14px; overflow:hidden; background:#000; height:0; }
+    #quran-audio-container.active { height:420px; }
+    #quran-audio-container iframe { width:100%; height:100%; border:0; }
   </style>
 </head>
 <body>
@@ -139,6 +155,7 @@
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <div class="xp-badge">⚡ <span id="total-xp">0</span> XP</div>
         <span id="user-email-label" style="font-size:0.8rem; color:#888;"></span>
+        <button id="teacher-mode-btn" class="btn btn-outline" style="display:none;" onclick="showView('teacher-view')">👨‍🏫 Teacher</button>
         <button id="admin-mode-btn" class="btn btn-outline" style="display:none;" onclick="showView('admin-view')">Admin</button>
         <button class="btn btn-outline" onclick="doLogout()">ውጣ</button>
       </div>
@@ -146,6 +163,11 @@
 
     <main>
       <div id="student-home" class="view active">
+        <div id="live-session-banner" class="live-session-banner" style="display:none;" onclick="joinMyLiveSession()">
+          <div style="font-size:1.8rem;">🕌🎤</div>
+          <strong>መምህርዎ ቀጥታ ክፍለ ትምህርት ጀምረዋል!</strong>
+          <div class="btn">ይቀላቀሉ</div>
+        </div>
         <div class="progress-card">
           <h2 style="margin:0;">የእርስዎ እድገት</h2>
           <div class="progress-bar-bg">
@@ -193,6 +215,43 @@
         <div class="quiz-card">
           <h3>🧩 ጥንዶቹን ያዛምዱ</h3>
           <div id="match-grid" class="match-grid"></div>
+        </div>
+      </div>
+
+      <div id="live-quran-view" class="view">
+        <div class="quran-page-nav">
+          <button class="btn btn-outline" onclick="leaveLiveQuranView()">← ውጣ</button>
+          <div>
+            <strong id="quran-page-title">ገጽ</strong>
+            <span style="color:#888; margin-right:6px;">— <span id="quran-session-student-label"></span></span>
+          </div>
+          <button class="btn btn-secondary" onclick="toggleAudioCall()">🎤 ኦዲዮ</button>
+        </div>
+        <div id="quran-teacher-controls" style="display:none; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+          <button class="btn btn-outline" onclick="teacherChangePage(-1)">→ ቀዳሚ ገጽ</button>
+          <span>ገጽ <span id="quran-page-num-label">1</span> / 604</span>
+          <button class="btn btn-outline" onclick="teacherChangePage(1)">ቀጣይ ገጽ ←</button>
+          <button class="btn btn-outline" onclick="teacherClearMarks()">🧹 ምልክቶችን አጽዳ</button>
+          <button class="btn" style="background:#C62828;" onclick="endLiveSession()">⏹ ክፍለ ትምህርቱን ዝጋ</button>
+        </div>
+        <div class="quran-mark-legend">
+          <span><span class="quran-mark-dot" style="background:#BBDEFB;"></span> ጠቋሚ (ንካ)</span>
+          <span><span class="quran-mark-dot" style="background:#FFCDD2;"></span> ስህተት</span>
+          <span><span class="quran-mark-dot" style="background:#C8E6C9;"></span> ትክክል</span>
+        </div>
+        <div id="quran-page-container"><p style="color:#999;">በመጫን ላይ…</p></div>
+        <div id="quran-audio-container"></div>
+      </div>
+
+      <div id="teacher-view" class="view">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <button class="btn btn-outline" onclick="showView('student-home')">← ተመለስ</button>
+          <span style="font-weight:bold; color:#666;">👨‍🏫 Teacher</span>
+        </div>
+        <div class="admin-card">
+          <h3>🎓 Students Who Finished Everything</h3>
+          <button class="btn btn-sm btn-outline" onclick="renderCompletedStudents('teacher-students-list')">↻ Refresh List</button>
+          <div id="teacher-students-list" style="margin-top:12px;"></div>
         </div>
       </div>
 
@@ -360,6 +419,9 @@
 
     // Only these emails see the Admin Panel.
     const ADMIN_EMAILS = ["mohammedseidmusteffa@gmail.com"];
+    // Teachers can start/run live Quran sessions but cannot edit lessons/content.
+    // Add teacher emails here (admins automatically get teacher access too).
+    const TEACHER_EMAILS = [];
 
     const firebaseApp = initializeApp(firebaseConfig);
     const auth = getAuth(firebaseApp);
@@ -368,7 +430,7 @@
     window.__fb = {
       auth, db, doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot,
       createUserWithEmailAndPassword, signInWithEmailAndPassword,
-      onAuthStateChanged, signOut, updateProfile, ADMIN_EMAILS
+      onAuthStateChanged, signOut, updateProfile, ADMIN_EMAILS, TEACHER_EMAILS
     };
 
     window.dispatchEvent(new Event('fb-ready'));
@@ -398,6 +460,7 @@
     let fb = null;
     let currentUser = null;
     let isAdmin = false;
+    let isTeacher = false;
     let appData = { levels: [] };                 // structure only
     let lessonQuestionsCache = {};                 // lessonId -> questions[]
     let userProgress = { xp: 0, completedLessons: [], checkpointScores: {}, adminNotified: false, allCompletedAt: null };
@@ -531,14 +594,17 @@
 
       currentUser = user;
       isAdmin = fb.ADMIN_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
+      isTeacher = isAdmin || fb.TEACHER_EMAILS.map(e => e.toLowerCase()).includes((user.email || '').toLowerCase());
       document.getElementById('auth-view').style.display = 'none';
       document.getElementById('app-root').style.display = 'block';
       document.getElementById('user-email-label').innerText = user.email || '';
       document.getElementById('admin-mode-btn').style.display = isAdmin ? 'inline-block' : 'none';
+      document.getElementById('teacher-mode-btn').style.display = isTeacher ? 'inline-block' : 'none';
 
       await ensureUserDoc(user);
       listenToUserProgress(user);
       listenToContentIndex();
+      if (!isAdmin && !isTeacher) listenToMyLiveSession(user);
     }
 
     async function ensureUserDoc(user) {
@@ -561,6 +627,132 @@
         document.getElementById('total-xp').innerText = userProgress.xp;
         if (document.getElementById('student-home').classList.contains('active')) renderStudentHome();
       });
+    }
+
+    // --- LIVE QURAN SESSION (shared page + marking + audio) ---
+    let liveSessionState = { studentUid: null, isTeacher: false, page: 1, marks: {} };
+    let unsubLiveSession = null;
+    let unsubMyLiveSession = null;
+    let quranPageCache = {};
+    const MARK_CYCLE = ['', 'point', 'mistake', 'good'];
+
+    function listenToMyLiveSession(user) {
+      if (unsubMyLiveSession) unsubMyLiveSession();
+      unsubMyLiveSession = fb.onSnapshot(fb.doc(fb.db, 'liveSessions', user.uid), (snap) => {
+        const banner = document.getElementById('live-session-banner');
+        const active = snap.exists() && snap.data().active;
+        banner.style.display = active ? 'block' : 'none';
+        if (!active && liveSessionState.studentUid === user.uid && document.getElementById('live-quran-view').classList.contains('active')) {
+          alert('ክፍለ ትምህርቱ ተጠናቅቋል።');
+          showView('student-home');
+        }
+      });
+    }
+
+    function joinMyLiveSession() {
+      openLiveQuranView(currentUser.uid, false, currentUser.email);
+    }
+
+    async function teacherStartSession(studentUid, studentEmail) {
+      await fb.setDoc(fb.doc(fb.db, 'liveSessions', studentUid), {
+        active: true, teacherEmail: currentUser.email, studentEmail, page: 1, marks: {}, startedAt: Date.now()
+      });
+      openLiveQuranView(studentUid, true, studentEmail);
+    }
+
+    function openLiveQuranView(studentUid, isTeacher, studentEmail) {
+      liveSessionState = { studentUid, isTeacher, page: 1, marks: {} };
+      document.getElementById('quran-teacher-controls').style.display = isTeacher ? 'flex' : 'none';
+      document.getElementById('quran-session-student-label').innerText = studentEmail || '';
+      showView('live-quran-view');
+      if (unsubLiveSession) unsubLiveSession();
+      unsubLiveSession = fb.onSnapshot(fb.doc(fb.db, 'liveSessions', studentUid), async (snap) => {
+        if (!snap.exists() || !snap.data().active) return;
+        const data = snap.data();
+        const pageChanged = data.page !== liveSessionState.page;
+        liveSessionState.page = data.page || 1;
+        liveSessionState.marks = data.marks || {};
+        document.getElementById('quran-page-num-label').innerText = liveSessionState.page;
+        try {
+          const ayahs = await fetchQuranPage(liveSessionState.page);
+          renderQuranPage(ayahs, liveSessionState.marks, isTeacher);
+        } catch (e) {
+          document.getElementById('quran-page-container').innerHTML = '<p style="color:#c00;">ገጹን መጫን አልተቻለም — ኢንተርኔት ያረጋግጡ።</p>';
+        }
+      });
+    }
+
+    function leaveLiveQuranView() {
+      if (unsubLiveSession) { unsubLiveSession(); unsubLiveSession = null; }
+      closeAudioCallUi();
+      showView(isAdmin ? 'admin-view' : (isTeacher ? 'teacher-view' : 'student-home'));
+    }
+
+    async function endLiveSession() {
+      if (!confirm('ክፍለ ትምህርቱን ለዘላለም መዝጋት ይፈልጋሉ?')) return;
+      await fb.setDoc(fb.doc(fb.db, 'liveSessions', liveSessionState.studentUid), { active: false }, { merge: true });
+      leaveLiveQuranView();
+    }
+
+    async function fetchQuranPage(pageNum) {
+      if (quranPageCache[pageNum]) return quranPageCache[pageNum];
+      const res = await fetch(`https://api.alquran.cloud/v1/page/${pageNum}/quran-uthmani`);
+      const json = await res.json();
+      quranPageCache[pageNum] = json.data.ayahs;
+      return json.data.ayahs;
+    }
+
+    function renderQuranPage(ayahs, marks, interactive) {
+      const container = document.getElementById('quran-page-container');
+      const firstSurah = (ayahs[0] && ayahs[0].surah && ayahs[0].surah.name) || '';
+      document.getElementById('quran-page-title').innerText = `${firstSurah} — ገጽ ${liveSessionState.page}`;
+      let html = '<div class="quran-page">';
+      ayahs.forEach(ayah => {
+        const words = ayah.text.split(' ').filter(Boolean);
+        words.forEach((w, i) => {
+          const loc = `${ayah.number}-${i}`;
+          const markType = marks[loc] || '';
+          html += `<span class="quran-word ${markType}" ${interactive ? `onclick="teacherToggleMark('${loc}')"` : ''} data-loc="${loc}">${w}</span> `;
+        });
+        html += `<span class="quran-ayah-end">﴾${ayah.numberInSurah}﴿</span> `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function teacherToggleMark(loc) {
+      if (!liveSessionState.isTeacher) return;
+      const cur = liveSessionState.marks[loc] || '';
+      const next = MARK_CYCLE[(MARK_CYCLE.indexOf(cur) + 1) % MARK_CYCLE.length];
+      const marks = { ...liveSessionState.marks };
+      if (next) marks[loc] = next; else delete marks[loc];
+      fb.setDoc(fb.doc(fb.db, 'liveSessions', liveSessionState.studentUid), { marks }, { merge: true });
+    }
+
+    function teacherClearMarks() {
+      fb.setDoc(fb.doc(fb.db, 'liveSessions', liveSessionState.studentUid), { marks: {} }, { merge: true });
+    }
+
+    function teacherChangePage(delta) {
+      if (!liveSessionState.isTeacher) return;
+      const newPage = Math.min(604, Math.max(1, liveSessionState.page + delta));
+      fb.setDoc(fb.doc(fb.db, 'liveSessions', liveSessionState.studentUid), { page: newPage, marks: {} }, { merge: true });
+    }
+
+    // Free, no-signup audio room via public Jitsi Meet server. For a fully custom/branded
+    // in-app call experience later, swap this for a Daily.co room + Cloud Function token.
+    function toggleAudioCall() {
+      const box = document.getElementById('quran-audio-container');
+      if (box.classList.contains('active')) { closeAudioCallUi(); return; }
+      const room = `LetterLearnerQuran-${liveSessionState.studentUid}`;
+      box.innerHTML = `<iframe src="https://meet.jit.si/${room}#config.startAudioOnly=true&config.prejoinPageEnabled=false&interfaceConfig.SHOW_JITSI_WATERMARK=false" allow="microphone"></iframe>`;
+      box.classList.add('active');
+    }
+
+    function closeAudioCallUi() {
+      const box = document.getElementById('quran-audio-container');
+      box.classList.remove('active');
+      box.innerHTML = '';
     }
 
     function listenToContentIndex() {
@@ -596,14 +788,16 @@
       alert('Saved!');
     }
 
-    async function renderCompletedStudents() {
-      const container = document.getElementById('completed-students-list');
+    async function renderCompletedStudents(targetId) {
+      targetId = targetId || 'completed-students-list';
+      const container = document.getElementById(targetId);
       container.innerHTML = '<p style="color:#999; font-size:0.85rem;">Loading…</p>';
       try {
         const snap = await fb.getDocs(fb.collection(fb.db, 'users'));
         const finished = [];
         snap.forEach(d => {
           const data = d.data();
+          data.uid = d.id;
           if (data.adminNotified) finished.push(data);
         });
         finished.sort((a, b) => new Date(b.allCompletedAt || 0) - new Date(a.allCompletedAt || 0));
@@ -614,7 +808,7 @@
         }
         container.innerHTML = finished.map(s => {
           const dateStr = s.allCompletedAt ? new Date(s.allCompletedAt).toLocaleString() : '';
-          return `<div class="q-admin-item"><span>${s.email}</span><span style="color:#888; font-size:0.8rem;">${dateStr}</span></div>`;
+          return `<div class="q-admin-item"><span>${s.email}</span><span style="color:#888; font-size:0.8rem;">${dateStr}</span><button class="btn btn-sm" onclick="teacherStartSession('${s.uid}', '${(s.email || '').replace(/'/g, "\\'")}')">🕌 ቀጥታ ክፍል ጀምር</button></div>`;
         }).join('');
       } catch (e) {
         console.error('Failed to load completed students:', e);
@@ -744,8 +938,15 @@
         document.getElementById('admin-view').classList.remove('active');
         return;
       }
+      if (viewId === 'teacher-view' && !isTeacher) {
+        alert("በዚህ መለያ የመምህር መዳረሻ የለዎትም።");
+        document.getElementById('student-home').classList.add('active');
+        document.getElementById('teacher-view').classList.remove('active');
+        return;
+      }
       if (viewId === 'student-home') renderStudentHome();
       if (viewId === 'admin-view') renderAdminPanel();
+      if (viewId === 'teacher-view') renderCompletedStudents('teacher-students-list');
     }
 
     // --- STUDENT PROGRESSION & CHECKPOINT UNLOCK ---
