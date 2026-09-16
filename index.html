@@ -753,7 +753,7 @@
       const box = document.getElementById('quran-audio-container');
       if (box.classList.contains('active')) { closeAudioCallUi(); return; }
       const room = `LetterLearnerQuran-${liveSessionState.studentUid}`;
-      box.innerHTML = `<iframe src="https://meet.jit.si/${room}#config.startAudioOnly=true&config.prejoinPageEnabled=false&interfaceConfig.SHOW_JITSI_WATERMARK=false" allow="microphone"></iframe>`;
+      box.innerHTML = `<iframe src="https://meet.jit.si/${room}#config.startAudioOnly=true&config.prejoinPageEnabled=false&interfaceConfig.SHOW_JITSI_WATERMARK=false" allow="microphone; autoplay; display-capture" allowfullscreen></iframe>`;
       box.classList.add('active');
     }
 
