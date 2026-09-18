@@ -8,19 +8,26 @@
   <meta name="theme-color" content="#4CAF50">
   <link rel="icon" href="icon-192.png">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
-      --primary: #4CAF50;
-      --primary-dark: #388E3C;
-      --secondary: #2196F3;
+      --primary: #2E7D4F;
+      --primary-dark: #1B5E3A;
+      --gold: #C89B3C;
+      --coral: #FF6F5E;
+      --secondary: #3B7DD8;
       --warning: #FF9800;
-      --danger: #f44336;
-      --bg: #F0F4F8;
+      --danger: #E53935;
+      --bg: #F7F3EA;
       --card-bg: #FFFFFF;
-      --text: #333333;
+      --text: #2B2B28;
+      --font-sans: 'Nunito', 'Segoe UI', Tahoma, sans-serif;
+      --font-arabic: 'Amiri', 'Traditional Arabic', serif;
     }
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    * { box-sizing: border-box; font-family: var(--font-sans); }
     body { background: var(--bg); color: var(--text); margin: 0; padding: 0; min-height: 100vh; display: flex; flex-direction: column; }
 
     header { background: var(--card-bg); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.08); flex-wrap: wrap; gap: 8px; }
@@ -40,13 +47,16 @@
     .view { display: none; }
     .view.active { display: block; }
 
-    .progress-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
+    .progress-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; transition: transform 0.18s ease, box-shadow 0.18s ease; }
+    .progress-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
     .progress-bar-bg { background: #e0e0e0; height: 16px; border-radius: 8px; overflow: hidden; margin-top: 10px; }
     .progress-bar-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease; }
 
     .level-title { font-size: 1.2rem; margin: 20px 0 10px 0; font-weight: 700; color: #555; display: flex; align-items: center; gap: 8px; }
     .lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
-    .lesson-card { background: var(--card-bg); padding: 18px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border: 3px solid transparent; transition: 0.2s; position: relative; }
+    .lesson-card { background: var(--card-bg); padding: 18px; border-radius: 16px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; border: 3px solid transparent; transition: transform 0.18s ease, box-shadow 0.18s ease; position: relative; }
+    .lesson-card:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    .lesson-card:active { transform: translateY(-1px) scale(0.98); }
     .lesson-card.completed { border-color: var(--primary); }
     .lesson-card.locked { opacity: 0.5; cursor: not-allowed; background: #e8e8e8; }
     .lesson-card.active-lesson { border-color: var(--secondary); }
@@ -77,7 +87,8 @@
     .stat-item { background: #F5F5F5; padding: 15px; border-radius: 12px; width: 45%; }
     .stat-val { font-size: 1.6rem; font-weight: bold; color: var(--primary); }
 
-    .admin-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .admin-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transition: box-shadow 0.18s ease; }
+    .admin-card:hover { box-shadow: 0 8px 18px rgba(0,0,0,0.08); }
     .form-group { margin-bottom: 15px; text-align: left; }
     .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
     .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; }
@@ -98,24 +109,61 @@
     .video-container { position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 16px; overflow: hidden; background: #000; }
     .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
     .level-video-btn { background: none; border: none; color: var(--secondary); font-weight: bold; font-size: 0.85rem; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; }
-    .live-class-card { background: linear-gradient(135deg, #2E7D32, #4CAF50); color: white; padding: 24px; border-radius: 20px; text-align: center; margin-top: 25px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); }
+    .live-class-card { background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; padding: 24px; border-radius: 20px; text-align: center; margin-top: 25px; box-shadow: 0 6px 16px rgba(0,0,0,0.15); transition: transform 0.18s ease; }
+    .live-class-card:hover { transform: translateY(-2px); }
     .live-class-card h3 { margin: 8px 0; font-size: 1.3rem; }
     .live-class-card p { margin: 6px 0 18px 0; opacity: 0.9; }
-    .live-class-card .btn { background: white; color: #2E7D32; }
+    .live-class-card .btn { background: white; color: var(--primary-dark); }
     .live-class-card .btn:hover { background: #f0f0f0; }
-    .live-session-banner { background: linear-gradient(135deg, #C62828, #E53935); color: white; padding: 18px; border-radius: 16px; text-align: center; margin-bottom: 20px; cursor: pointer; animation: pulseBanner 1.6s infinite; }
-    @keyframes pulseBanner { 0%,100% { box-shadow: 0 0 0 0 rgba(229,57,53,0.5); } 50% { box-shadow: 0 0 0 10px rgba(229,57,53,0); } }
-    .live-session-banner .btn { background: white; color: #C62828; margin-top: 8px; }
+
+    /* Live session banner: "join me" broadcast feel, not an alarm */
+    .live-session-banner {
+      background: linear-gradient(120deg, #FF8A65, var(--coral), #FF8A65);
+      background-size: 200% 100%;
+      animation: shimmerBanner 3.5s ease infinite;
+      color: white; padding: 18px 20px; border-radius: 18px; text-align: center;
+      margin-bottom: 20px; cursor: pointer; box-shadow: 0 6px 18px rgba(255,111,94,0.35);
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    }
+    @keyframes shimmerBanner { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    .live-session-banner .live-session-left { display: flex; align-items: center; gap: 12px; text-align: left; }
+    .live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.18); padding: 3px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.03em; }
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: livePulseDot 1.3s ease infinite; }
+    @keyframes livePulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .mic-wave { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; }
+    .mic-wave span { width: 3px; background: white; border-radius: 2px; animation: micWave 0.9s ease-in-out infinite; }
+    .mic-wave span:nth-child(1) { height: 40%; animation-delay: 0s; }
+    .mic-wave span:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+    .mic-wave span:nth-child(3) { height: 65%; animation-delay: 0.3s; }
+    .mic-wave span:nth-child(4) { height: 85%; animation-delay: 0.45s; }
+    @keyframes micWave { 0%,100% { transform: scaleY(0.4); } 50% { transform: scaleY(1); } }
+    .live-session-banner .btn { background: white; color: var(--coral); white-space: nowrap; }
+
+    /* Live Quran session view */
+    .quran-session-header {
+      background: linear-gradient(120deg, var(--primary-dark), var(--primary));
+      color: white; border-radius: 16px; padding: 14px 18px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .quran-session-header .who { font-weight: 800; font-size: 1.05rem; }
+    .quran-session-header .live-badge { background: rgba(255,255,255,0.2); }
+    #quran-session-timer { font-variant-numeric: tabular-nums; opacity: 0.9; font-size: 0.9rem; }
+    .quran-teacher-controls-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .quran-controls-divider { width: 1px; align-self: stretch; background: #e0dccb; margin: 0 4px; }
+
     .quran-page-nav { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-    .quran-page { background:#fffdf5; border:1px solid #e8dfc0; border-radius:14px; padding:22px 18px; direction:rtl; text-align:right; font-family:'Amiri','Traditional Arabic',serif; font-size:1.7rem; line-height:2.6; }
+    .quran-page { background:#fffdf5; border:1px solid #ecdfb8; border-radius:16px; padding:26px 20px; direction:rtl; text-align:right; font-family:var(--font-arabic); font-size:1.7rem; line-height:2.7; box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 10px 24px rgba(163,130,50,0.12), inset 0 0 0 6px #fffef9; }
     .quran-word { display:inline-block; padding:2px 3px; border-radius:6px; cursor:pointer; }
     .quran-word.point { background:#BBDEFB; }
     .quran-word.mistake { background:#FFCDD2; }
     .quran-word.good { background:#C8E6C9; }
-    .quran-ayah-end { color:var(--secondary); font-size:1.1rem; margin:0 4px; }
-    .quran-mark-legend { display:flex; gap:14px; flex-wrap:wrap; margin:12px 0; font-size:0.85rem; color:#666; }
-    .quran-mark-legend span { display:inline-flex; align-items:center; gap:5px; }
-    .quran-mark-dot { width:12px; height:12px; border-radius:3px; display:inline-block; }
+    .quran-ayah-end { color:var(--gold); font-size:1.1rem; margin:0 4px; }
+    .quran-mark-legend { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
+    .quran-mark-legend span { display:inline-flex; align-items:center; gap:7px; font-size:0.8rem; font-weight:700; color:#555; background:#fff; padding:6px 12px; border-radius:20px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .quran-mark-dot { width:11px; height:11px; border-radius:50%; display:inline-block; }
+    .quran-mark-legend span:nth-child(1) .quran-mark-dot { background:#2196F3; box-shadow: 0 0 0 4px #BBDEFB; }
+    .quran-mark-legend span:nth-child(2) .quran-mark-dot { background:#E53935; box-shadow: 0 0 0 4px #FFCDD2; }
+    .quran-mark-legend span:nth-child(3) .quran-mark-dot { background:#43A047; box-shadow: 0 0 0 4px #C8E6C9; }
     #quran-audio-container { margin-top:16px; border-radius:14px; overflow:hidden; background:#000; height:0; }
     #quran-audio-container.active { height:420px; }
     #quran-audio-container iframe { width:100%; height:100%; border:0; }
@@ -164,8 +212,13 @@
     <main>
       <div id="student-home" class="view active">
         <div id="live-session-banner" class="live-session-banner" style="display:none;" onclick="joinMyLiveSession()">
-          <div style="font-size:1.8rem;">🕌🎤</div>
-          <strong>መምህርዎ ቀጥታ ክፍለ ትምህርት ጀምረዋል!</strong>
+          <div class="live-session-left">
+            <div class="mic-wave"><span></span><span></span><span></span><span></span></div>
+            <div>
+              <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+              <strong style="display:block; margin-top:4px;">መምህርዎ ቀጥታ ክፍለ ትምህርት ጀምረዋል</strong>
+            </div>
+          </div>
           <div class="btn">ይቀላቀሉ</div>
         </div>
         <div class="progress-card">
@@ -219,25 +272,29 @@
       </div>
 
       <div id="live-quran-view" class="view">
-        <div class="quran-page-nav">
-          <button class="btn btn-outline" onclick="leaveLiveQuranView()">← ውጣ</button>
+        <div class="quran-session-header">
+          <button class="btn btn-outline" style="background:rgba(255,255,255,0.15); color:white; border-color:rgba(255,255,255,0.4);" onclick="leaveLiveQuranView()">← ውጣ</button>
           <div>
-            <strong id="quran-page-title">ገጽ</strong>
-            <span style="color:#888; margin-right:6px;">— <span id="quran-session-student-label"></span></span>
+            <div class="live-badge"><span class="live-dot"></span> LIVE · <span id="quran-session-timer">00:00</span></div>
+            <div class="who"><span id="quran-page-title">ገጽ</span> — <span id="quran-session-student-label"></span></div>
           </div>
-          <button class="btn btn-secondary" onclick="toggleAudioCall()">🎤 ኦዲዮ</button>
+          <button class="btn" style="background:white; color:var(--primary-dark);" onclick="toggleAudioCall()">🎤 ኦዲዮ</button>
         </div>
-        <div id="quran-teacher-controls" style="display:none; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
-          <button class="btn btn-outline" onclick="teacherChangePage(-1)">→ ቀዳሚ ገጽ</button>
-          <span>ገጽ <span id="quran-page-num-label">1</span> / 604</span>
-          <button class="btn btn-outline" onclick="teacherChangePage(1)">ቀጣይ ገጽ ←</button>
+        <div id="quran-teacher-controls" style="display:none; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <div class="quran-teacher-controls-group">
+            <button class="btn btn-outline" onclick="teacherChangePage(-1)">→ ቀዳሚ ገጽ</button>
+            <span>ገጽ <span id="quran-page-num-label">1</span> / 604</span>
+            <button class="btn btn-outline" onclick="teacherChangePage(1)">ቀጣይ ገጽ ←</button>
+          </div>
+          <div class="quran-controls-divider"></div>
           <button class="btn btn-outline" onclick="teacherClearMarks()">🧹 ምልክቶችን አጽዳ</button>
-          <button class="btn" style="background:#C62828;" onclick="endLiveSession()">⏹ ክፍለ ትምህርቱን ዝጋ</button>
+          <div class="quran-controls-divider"></div>
+          <button class="btn" style="background:var(--danger);" onclick="endLiveSession()">⏹ ክፍለ ትምህርቱን ዝጋ</button>
         </div>
         <div class="quran-mark-legend">
-          <span><span class="quran-mark-dot" style="background:#BBDEFB;"></span> ጠቋሚ (ንካ)</span>
-          <span><span class="quran-mark-dot" style="background:#FFCDD2;"></span> ስህተት</span>
-          <span><span class="quran-mark-dot" style="background:#C8E6C9;"></span> ትክክል</span>
+          <span><span class="quran-mark-dot"></span> ጠቋሚ (ንካ)</span>
+          <span><span class="quran-mark-dot"></span> ስህተት</span>
+          <span><span class="quran-mark-dot"></span> ትክክል</span>
         </div>
         <div id="quran-page-container"><p style="color:#999;">በመጫን ላይ…</p></div>
         <div id="quran-audio-container"></div>
@@ -250,7 +307,7 @@
         </div>
         <div class="admin-card">
           <h3>🎓 Students Who Finished Everything</h3>
-          <button class="btn btn-sm btn-outline" onclick="renderCompletedStudents('teacher-students-list')">↻ Refresh List</button>
+          <button class="btn btn-sm btn-outline" onclick="renderCompletedStudents('teacher-students-list', true)">↻ Refresh List</button>
           <div id="teacher-students-list" style="margin-top:12px;"></div>
         </div>
       </div>
@@ -634,7 +691,25 @@
     let unsubLiveSession = null;
     let unsubMyLiveSession = null;
     let quranPageCache = {};
+    let sessionTimerInterval = null;
     const MARK_CYCLE = ['', 'point', 'mistake', 'good'];
+
+    function startSessionTimer(startedAt) {
+      stopSessionTimer();
+      const label = document.getElementById('quran-session-timer');
+      const tick = () => {
+        const secs = Math.max(0, Math.floor((Date.now() - (startedAt || Date.now())) / 1000));
+        const m = String(Math.floor(secs / 60)).padStart(2, '0');
+        const s = String(secs % 60).padStart(2, '0');
+        label.innerText = `${m}:${s}`;
+      };
+      tick();
+      sessionTimerInterval = setInterval(tick, 1000);
+    }
+
+    function stopSessionTimer() {
+      if (sessionTimerInterval) { clearInterval(sessionTimerInterval); sessionTimerInterval = null; }
+    }
 
     function listenToMyLiveSession(user) {
       if (unsubMyLiveSession) unsubMyLiveSession();
@@ -655,8 +730,24 @@
       openLiveQuranView(currentUser.uid, false, currentUser.email);
     }
 
+    async function assignTeacherToStudent(studentUid, teacherEmail) {
+      try {
+        await fb.setDoc(fb.doc(fb.db, 'users', studentUid), { assignedTeacher: teacherEmail }, { merge: true });
+      } catch (e) {
+        alert('Could not assign teacher: ' + (e && e.message ? e.message : e));
+      }
+    }
+
     async function teacherStartSession(studentUid, studentEmail) {
       try {
+        if (!isAdmin) {
+          const studentSnap = await fb.getDoc(fb.doc(fb.db, 'users', studentUid));
+          const assigned = (studentSnap.exists() && studentSnap.data().assignedTeacher || '').toLowerCase();
+          if (assigned !== (currentUser.email || '').toLowerCase()) {
+            alert('This student is not assigned to you. Ask the admin to assign them first.');
+            return;
+          }
+        }
         await fb.setDoc(fb.doc(fb.db, 'liveSessions', studentUid), {
           active: true, teacherEmail: currentUser.email, studentEmail, page: 1, marks: {}, startedAt: Date.now()
         });
@@ -675,6 +766,7 @@
       unsubLiveSession = fb.onSnapshot(fb.doc(fb.db, 'liveSessions', studentUid), async (snap) => {
         if (!snap.exists() || !snap.data().active) return;
         const data = snap.data();
+        if (!sessionTimerInterval) startSessionTimer(data.startedAt);
         const pageChanged = data.page !== liveSessionState.page;
         liveSessionState.page = data.page || 1;
         liveSessionState.marks = data.marks || {};
@@ -692,6 +784,7 @@
 
     function leaveLiveQuranView() {
       if (unsubLiveSession) { unsubLiveSession(); unsubLiveSession = null; }
+      stopSessionTimer();
       closeAudioCallUi();
       showView(isAdmin ? 'admin-view' : (isTeacher ? 'teacher-view' : 'student-home'));
     }
@@ -796,7 +889,7 @@
       alert('Saved!');
     }
 
-    async function renderCompletedStudents(targetId) {
+    async function renderCompletedStudents(targetId, filterMine) {
       targetId = targetId || 'completed-students-list';
       const container = document.getElementById(targetId);
       container.innerHTML = '<p style="color:#999; font-size:0.85rem;">Loading…</p>';
@@ -810,14 +903,31 @@
         });
         finished.sort((a, b) => new Date(b.allCompletedAt || 0) - new Date(a.allCompletedAt || 0));
 
-        if (finished.length === 0) {
-          container.innerHTML = '<p style="color:#999; font-size:0.9rem;">No one has finished everything yet.</p>';
+        let list = finished;
+        if (filterMine) {
+          list = finished.filter(s => (s.assignedTeacher || '').toLowerCase() === (currentUser.email || '').toLowerCase());
+        }
+
+        if (list.length === 0) {
+          container.innerHTML = filterMine
+            ? '<p style="color:#999; font-size:0.9rem;">እርስዎ ገና ምንም ተማሪ አልተመደበልዎትም። አስተዳዳሪ እስኪመድብ ይጠብቁ።</p>'
+            : '<p style="color:#999; font-size:0.9rem;">No one has finished everything yet.</p>';
           return;
         }
-        container.innerHTML = finished.map(s => {
-          const dateStr = s.allCompletedAt ? new Date(s.allCompletedAt).toLocaleString() : '';
-          return `<div class="q-admin-item"><span>${s.email}</span><span style="color:#888; font-size:0.8rem;">${dateStr}</span><button class="btn btn-sm" onclick="teacherStartSession('${s.uid}', '${(s.email || '').replace(/'/g, "\\'")}')">🕌 ቀጥታ ክፍል ጀምር</button></div>`;
-        }).join('');
+
+        if (filterMine) {
+          container.innerHTML = list.map(s => {
+            const dateStr = s.allCompletedAt ? new Date(s.allCompletedAt).toLocaleString() : '';
+            return `<div class="q-admin-item"><span>${s.email}</span><span style="color:#888; font-size:0.8rem;">${dateStr}</span><button class="btn btn-sm" onclick="teacherStartSession('${s.uid}', '${(s.email || '').replace(/'/g, "\\'")}')">🕌 ቀጥታ ክፍል ጀምር</button></div>`;
+          }).join('');
+        } else {
+          const teacherOptions = ['', ...fb.TEACHER_EMAILS, ...fb.ADMIN_EMAILS].filter((v, i, a) => a.indexOf(v) === i);
+          container.innerHTML = list.map(s => {
+            const dateStr = s.allCompletedAt ? new Date(s.allCompletedAt).toLocaleString() : '';
+            const opts = teacherOptions.map(t => `<option value="${t}" ${(s.assignedTeacher || '') === t ? 'selected' : ''}>${t || '— Unassigned —'}</option>`).join('');
+            return `<div class="q-admin-item"><span>${s.email}</span><span style="color:#888; font-size:0.8rem;">${dateStr}</span><select onchange="assignTeacherToStudent('${s.uid}', this.value)" style="max-width:170px; font-size:0.8rem;">${opts}</select><button class="btn btn-sm" onclick="teacherStartSession('${s.uid}', '${(s.email || '').replace(/'/g, "\\'")}')">🕌 ቀጥታ ክፍል ጀምር</button></div>`;
+          }).join('');
+        }
       } catch (e) {
         console.error('Failed to load completed students:', e);
         container.innerHTML = '<p style="color:#c62828; font-size:0.9rem;">Could not load the list — check the security rules are updated to let admin read the users collection.</p>';
@@ -954,7 +1064,7 @@
       }
       if (viewId === 'student-home') renderStudentHome();
       if (viewId === 'admin-view') renderAdminPanel();
-      if (viewId === 'teacher-view') renderCompletedStudents('teacher-students-list');
+      if (viewId === 'teacher-view') renderCompletedStudents('teacher-students-list', true);
     }
 
     // --- STUDENT PROGRESSION & CHECKPOINT UNLOCK ---
