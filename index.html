@@ -48,9 +48,46 @@
     .btn-outline { background: transparent; color: #666; border: 2px solid #ccc; }
     .btn-sm { padding: 4px 10px; font-size: 0.8rem; border-radius: 12px; }
 
-    main { flex: 1; max-width: 600px; width: 100%; margin: 20px auto; padding: 0 15px; }
+    main { flex: 1; max-width: 600px; width: 100%; margin: 20px auto; padding: 0 15px 90px 15px; }
     .view { display: none; }
     .view.active { display: block; }
+
+    /* Hero / home header */
+    .hero-card { background: linear-gradient(160deg, var(--primary-dark), var(--primary)); color: white; padding: 22px 20px; border-radius: 22px; margin-bottom: 22px; box-shadow: 0 8px 20px rgba(27,94,58,0.25); position: relative; overflow: hidden; }
+    .hero-arabic { font-family: var(--font-arabic); font-size: 1.3rem; opacity: 0.9; display: block; margin-bottom: 2px; }
+    .hero-card h2 { margin: 0 0 2px 0; font-size: 1.5rem; }
+    .hero-sub { margin: 0 0 16px 0; opacity: 0.9; font-size: 0.95rem; }
+    .hero-stats-row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+    .hero-stat-pill { background: rgba(255,255,255,0.16); padding: 5px 12px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; }
+    .hero-card .progress-bar-bg { background: rgba(255,255,255,0.25); box-shadow: none; }
+    .hero-card .progress-bar-fill { background: linear-gradient(90deg, var(--gold), #F3D583); box-shadow: 0 0 10px rgba(200,155,60,0.6); }
+    .continue-btn { width: 100%; margin-top: 16px; background: white; color: var(--primary-dark); padding: 14px; border-radius: 16px; font-size: 1.05rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .continue-btn:hover { background: #f4f4f4; }
+    .continue-btn .continue-sub { display: block; font-size: 0.75rem; font-weight: 500; opacity: 0.75; }
+
+    /* Learning journey path */
+    .lesson-path { position: relative; padding: 6px 0 10px 0; }
+    .lesson-path::before { content: ''; position: absolute; left: 50%; top: 6px; bottom: 6px; width: 4px; background: #E7DFC5; border-radius: 2px; transform: translateX(-50%); }
+    .path-node { position: relative; display: flex; margin: 4px 0; z-index: 1; }
+    .path-node.align-left { justify-content: flex-start; padding-left: 6%; }
+    .path-node.align-right { justify-content: flex-end; padding-right: 6%; }
+    .path-node-inner { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; width: 92px; }
+    .path-bubble { width: 68px; height: 68px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 3px solid #E7DFC5; transition: transform 0.15s ease; }
+    .path-node-inner:active .path-bubble { transform: scale(0.94); }
+    .path-node-inner.completed .path-bubble { background: linear-gradient(160deg, var(--primary), var(--primary-dark)); border-color: var(--primary-dark); color: white; }
+    .path-node-inner.current .path-bubble { border-color: var(--gold); box-shadow: 0 0 0 6px rgba(200,155,60,0.25), 0 4px 10px rgba(0,0,0,0.1); animation: currentNodePulse 1.8s ease infinite; }
+    @keyframes currentNodePulse { 0%,100% { box-shadow: 0 0 0 6px rgba(200,155,60,0.25), 0 4px 10px rgba(0,0,0,0.1); } 50% { box-shadow: 0 0 0 10px rgba(200,155,60,0.12), 0 4px 10px rgba(0,0,0,0.1); } }
+    .path-node-inner.locked { cursor: not-allowed; }
+    .path-node-inner.locked .path-bubble { opacity: 0.55; }
+    .path-node-inner.checkpoint .path-bubble { width: 78px; height: 78px; background: linear-gradient(160deg, #FFE9B0, var(--gold)); border-color: var(--gold); font-size: 2rem; }
+    .path-label { font-size: 0.72rem; font-weight: 700; text-align: center; color: #555; line-height: 1.2; }
+    .path-sub { font-size: 0.65rem; color: #999; text-align: center; }
+
+    /* Bottom navigation */
+    .bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(8px); display: flex; box-shadow: 0 -2px 12px rgba(0,0,0,0.08); z-index: 60; padding-bottom: env(safe-area-inset-bottom); }
+    .bottom-nav-btn { flex: 1; background: none; border: none; padding: 9px 0 7px 0; font-size: 0.68rem; font-weight: 700; color: #999; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+    .bottom-nav-btn .icon { font-size: 1.35rem; }
+    .bottom-nav-btn.active { color: var(--primary); }
 
     .progress-card { background: var(--card-bg); padding: 20px; border-radius: 16px; margin-bottom: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; transition: transform 0.18s ease, box-shadow 0.18s ease; }
     .progress-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
@@ -232,14 +269,45 @@
           </div>
           <div class="btn">ይቀላቀሉ</div>
         </div>
-        <div class="progress-card">
-          <h2 style="margin:0;">የእርስዎ እድገት</h2>
+        <div class="hero-card">
+          <span class="hero-arabic">السلام عليكم</span>
+          <h2 id="hero-name">👋</h2>
+          <p class="hero-sub">ዛሬ ለትምህርት ዝግጁ ነዎት?</p>
+          <div class="hero-stats-row">
+            <span class="hero-stat-pill">⚡ <span id="total-xp-hero">0</span> XP</span>
+            <span class="hero-stat-pill">🏆 <span id="hero-lessons-done">0</span> ትምህርቶች</span>
+          </div>
           <div class="progress-bar-bg">
             <div id="overall-progress" class="progress-bar-fill"></div>
           </div>
-          <p id="progress-text" style="margin: 10px 0 0 0; font-weight: 600; color: #666;">0 / 0 ትምህርቶች ተጠናቅቀዋል</p>
+          <p id="progress-text" style="margin: 8px 0 0 0; font-weight: 600; opacity: 0.9; font-size: 0.85rem;">0 / 0 ትምህርቶች ተጠናቅቀዋል</p>
+          <button id="continue-btn" class="btn continue-btn" style="display:none;">
+            <span>▶️</span>
+            <span>
+              <span id="continue-btn-label">ትምህርት ቀጥል</span>
+              <span class="continue-sub" id="continue-btn-sub"></span>
+            </span>
+          </button>
         </div>
         <div id="levels-container"></div>
+      </div>
+
+      <div id="account-view" class="view">
+        <div class="progress-card" style="text-align:center;">
+          <div style="font-size:2.5rem;">👤</div>
+          <h2 style="margin:8px 0 2px 0;" id="account-name">-</h2>
+          <p style="color:#888; margin:0 0 16px 0;" id="account-email"></p>
+          <div class="hero-stats-row" style="justify-content:center;">
+            <span class="hero-stat-pill" style="background:#FFF3E0; color:#B45309;">⚡ <span id="account-xp">0</span> XP</span>
+            <span class="hero-stat-pill" style="background:#E8F5E9; color:#1B5E3A;">🏆 <span id="account-lessons">0</span> ትምህርቶች</span>
+          </div>
+        </div>
+        <div class="admin-card" style="display:flex; flex-direction:column; gap:10px;">
+          <button id="account-teacher-btn" class="btn btn-outline" style="display:none;" onclick="showView('teacher-view')">👨‍🏫 Teacher Panel</button>
+          <button id="account-admin-btn" class="btn btn-outline" style="display:none;" onclick="showView('admin-view')">Admin Panel</button>
+          <button class="btn btn-outline" onclick="toggleSound()">🔊 ድምጽ ማብራት/ማጥፋት</button>
+          <button class="btn btn-danger" onclick="doLogout()">ውጣ</button>
+        </div>
       </div>
 
       <div id="video-view" class="view">
@@ -464,6 +532,12 @@
         </div>
       </div>
     </main>
+
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="bottom-nav-btn" id="nav-home-btn" onclick="navGoHome()"><span class="icon">🏠</span>Home</button>
+      <button class="bottom-nav-btn" id="nav-lessons-btn" onclick="navGoLessons()"><span class="icon">📚</span>Lessons</button>
+      <button class="bottom-nav-btn" id="nav-you-btn" onclick="navGoAccount()"><span class="icon">👤</span>You</button>
+    </nav>
   </div>
 
   <script type="module">
@@ -1057,6 +1131,7 @@
     });
 
     // --- NAVIGATION ---
+    const NAV_VISIBLE_VIEWS = ['student-home', 'teacher-view', 'admin-view', 'account-view'];
     function showView(viewId) {
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(viewId).classList.add('active');
@@ -1076,6 +1151,36 @@
       if (viewId === 'student-home') renderStudentHome();
       if (viewId === 'admin-view') renderAdminPanel();
       if (viewId === 'teacher-view') renderCompletedStudents('teacher-students-list', true);
+      if (viewId === 'account-view') renderAccountView();
+
+      const nav = document.getElementById('bottom-nav');
+      nav.style.display = NAV_VISIBLE_VIEWS.includes(viewId) ? 'flex' : 'none';
+      document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+      if (viewId === 'account-view') document.getElementById('nav-you-btn').classList.add('active');
+      else document.getElementById('nav-home-btn').classList.add('active');
+    }
+
+    function navGoHome() {
+      showView('student-home');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function navGoLessons() {
+      showView('student-home');
+      setTimeout(() => {
+        const el = document.getElementById('levels-container');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 60);
+    }
+    function navGoAccount() { showView('account-view'); }
+
+    function renderAccountView() {
+      if (!currentUser) return;
+      document.getElementById('account-name').innerText = currentUser.displayName || currentUser.email.split('@')[0];
+      document.getElementById('account-email').innerText = currentUser.email || '';
+      document.getElementById('account-xp').innerText = userProgress.xp || 0;
+      document.getElementById('account-lessons').innerText = (userProgress.completedLessons || []).length;
+      document.getElementById('account-teacher-btn').style.display = isTeacher ? 'block' : 'none';
+      document.getElementById('account-admin-btn').style.display = isAdmin ? 'block' : 'none';
     }
 
     // --- STUDENT PROGRESSION & CHECKPOINT UNLOCK ---
@@ -1091,7 +1196,11 @@
       const container = document.getElementById('levels-container');
       container.innerHTML = '';
 
-      let totalLessons = 0, clearedCount = 0, previousLessonCleared = true;
+      document.getElementById('hero-name').innerText = `👋 ${currentUser.displayName || currentUser.email.split('@')[0]}`;
+      document.getElementById('total-xp-hero').innerText = userProgress.xp || 0;
+
+      let totalLessons = 0, clearedCount = 0, previousLessonCleared = true, nodeIdx = 0;
+      let nextLesson = null;
 
       appData.levels.forEach((level) => {
         const levelHeader = document.createElement('div');
@@ -1100,36 +1209,39 @@
           (level.videoUrl ? `<button class="level-video-btn" onclick="showLevelVideo('${level.id}')">🎥 ቪዲዮ ይመልከቱ</button>` : '');
         container.appendChild(levelHeader);
 
-        const grid = document.createElement('div');
-        grid.className = 'lesson-grid';
+        const path = document.createElement('div');
+        path.className = 'lesson-path';
 
         level.lessons.forEach((lesson) => {
           totalLessons++;
           const cleared = isLessonCleared(lesson);
           if (cleared) clearedCount++;
           const isUnlocked = previousLessonCleared;
+          const isCurrent = isUnlocked && !cleared;
           const attempted = lesson.isCheckpoint && typeof userProgress.checkpointScores[lesson.id] === 'number';
+          if (isCurrent && !nextLesson) nextLesson = lesson;
 
-          const card = document.createElement('div');
-          card.className = `lesson-card ${cleared ? 'completed' : ''} ${!isUnlocked ? 'locked' : (lesson.isCheckpoint ? 'checkpoint' : 'active-lesson')}`;
+          const stateClass = cleared ? 'completed' : (!isUnlocked ? 'locked' : 'current');
+          const icon = cleared ? '✅' : (!isUnlocked ? '🔒' : (lesson.isCheckpoint ? '🚩' : (lesson.type === 'matching' ? '🧩' : '⭐')));
 
-          let actionButtons = '';
-          if (cleared) {
-            actionButtons = `<button class="btn btn-sm btn-outline" style="margin-top:8px;" onclick="event.stopPropagation(); startLesson('${lesson.id}')">ድገም</button>`;
-          } else if (isUnlocked && lesson.isCheckpoint && attempted) {
-            actionButtons = `<div style="font-size:0.75rem; color:#E65100; margin-top:6px;">የመጨረሻ ውጤት፦ ${userProgress.checkpointScores[lesson.id]}% — 85% ያስፈልጋል</div>`;
-          }
+          let subText = '';
+          if (cleared) subText = 'ድገም';
+          else if (isUnlocked && lesson.isCheckpoint && attempted) subText = `${userProgress.checkpointScores[lesson.id]}% (85% ያስፈልጋል)`;
 
-          card.innerHTML = `
-            <div class="lesson-icon">${cleared ? '✅' : (!isUnlocked ? '🔒' : (lesson.isCheckpoint ? '🚩' : (lesson.type === 'matching' ? '🧩' : '⭐')))}</div>
-            <div style="font-weight:bold;">${lesson.title}</div>
-            ${actionButtons}
+          const node = document.createElement('div');
+          node.className = `path-node ${nodeIdx % 2 === 0 ? 'align-left' : 'align-right'}`;
+          node.innerHTML = `
+            <div class="path-node-inner ${stateClass} ${lesson.isCheckpoint ? 'checkpoint' : ''}">
+              <div class="path-bubble">${lesson.isCheckpoint && isUnlocked ? '🏆' : icon}</div>
+              <div class="path-label">${lesson.title}</div>
+              ${subText ? `<div class="path-sub">${subText}</div>` : ''}
+            </div>
           `;
+          if (isUnlocked) node.querySelector('.path-node-inner').onclick = () => startLesson(lesson.id);
 
-          if (isUnlocked) card.onclick = () => startLesson(lesson.id);
-
-          grid.appendChild(card);
+          path.appendChild(node);
           previousLessonCleared = cleared;
+          nodeIdx++;
         });
 
         if (level.lessons.length === 0 && level.videoUrl) {
@@ -1139,8 +1251,19 @@
           container.appendChild(note);
         }
 
-        container.appendChild(grid);
+        container.appendChild(path);
       });
+
+      document.getElementById('hero-lessons-done').innerText = clearedCount;
+      const continueBtn = document.getElementById('continue-btn');
+      if (nextLesson) {
+        continueBtn.style.display = 'flex';
+        document.getElementById('continue-btn-label').innerText = `ትምህርት ቀጥል፦ ${nextLesson.title}`;
+        document.getElementById('continue-btn-sub').innerText = '+XP ለማግኘት ይጫኑ';
+        continueBtn.onclick = () => startLesson(nextLesson.id);
+      } else {
+        continueBtn.style.display = 'none';
+      }
 
       const progressPct = totalLessons > 0 ? (clearedCount / totalLessons) * 100 : 0;
       document.getElementById('overall-progress').style.width = `${progressPct}%`;
