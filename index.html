@@ -1268,7 +1268,7 @@
       document.getElementById('account-admin-btn').style.display = isAdmin ? 'block' : 'none';
 
       document.getElementById('account-streak-num').innerText = userProgress.currentStreak || 0;
-      const dayLabels = ['እ', 'ሰ', 'ማ', 'ረ', 'ሐ', 'ዓ', 'እ'];
+      const dayLabels = ['ሰ', 'ማ', 'ረ', 'ሐ', 'ዓ', 'ቅ', 'እ'];
       const today = new Date();
       const dow = today.getDay(); // 0=Sun..6=Sat
       const mondayOffset = dow === 0 ? -6 : 1 - dow;
@@ -1342,7 +1342,7 @@
               ${subText ? `<div class="path-sub">${subText}</div>` : ''}
             </div>
           `;
-          if (isUnlocked) node.querySelector('.path-node-inner').onclick = () => startLesson(lesson.id);
+          if (isUnlocked || cleared) node.querySelector('.path-node-inner').onclick = () => startLesson(lesson.id);
 
           path.appendChild(node);
           previousLessonCleared = cleared;
